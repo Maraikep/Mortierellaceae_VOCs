@@ -1,0 +1,345 @@
+---
+title: "VOC2_growth"
+author: "Maraike Probst"
+date: "23 11 2021"
+output: html_document
+---
+
+
+```{r}
+library(WriteXLS)
+library(vegan)
+library(reshape2)
+library(ggplot2)
+library(RColorBrewer)
+library(car)
+```
+
+The experiment was conducted on 5 Linnemannia species and 1 Entomortierella species (parvispora). (Variable class_name)
+For each species 3-6 biological strains were observed. (Variable id, Variable bio_replica)
+The fungi were cultivated alone or in co-culture with P. helmaticensis. (Variable trt)
+
+For growth analysis, cultures were grown on both PDA and LCA medium. (Volatile analysis were performed only on PDA.)
+
+The measurements were conducted in technical triplicates. (Variable replica)
+For PTR-ToF there were 3 rounds with a time difference of around 24 h between them. These are repeated measurements.
+
+
+This data set consists of several subsets:
+Growth data: includes daily radial growth rate (increase in diameter per day)
+
+PTR-ToF data: chromatogramm peaks of volatile compounds produced by the cultures (113 peaks)
+PTR-ToF data selected: These were found in the GC-MS, too.
+
+GC-MS data: chromatogramm peaks of volatile compounds produced by the cultures. Only 1 replicate and time point was used for analysis.
+GC-MS data selected: These were found in PTR-ToF, too.
+
+
+I Growth
+After an initial overall model predicting the growth (growth rate and biomass) from all experimental factors, we will split the dataset by medium. 
+The variable of interest, the response variable is "growthrate".
+We are interested in the changes between bacterial association and pure fungal cultures.
+
+
+The technical replicates are a confirmation of the homogeneity within the same strain in terms of laboratory observation. We expect them to be very similar.
+```{r}
+growth <- read.delim("Growth_data.txt")
+for(i in 1:ncol(growth)){
+  print(class(growth[,i]))
+}
+growth$species <- factor(growth$species, levels = c("Exigua", "Gamsii", "Hyalina", "Sclerotiella", "Solitaria", "E.Galaxi"), ordered = T)
+
+for(i in 2:5){
+  growth[,i] <- as.factor(growth[,i])
+}
+
+growth$strain_asso <- paste(growth$strain, growth$asso, sep = "_")
+growth$strain_asso <- as.factor(growth$strain_asso)
+
+
+growth.pda <- growth[which(growth$Media == "PDA"),]
+growth.lca <- growth[which(growth$Media == "lcA"),]
+
+```
+
+
+Are the technical replicates comparable?
+Results: The technical replicates are quite comparable.
+For growthrate on PDA, the standard deviation is on average 2.3% of the mean with a maximum of 15%.
+For growthrate on lcA, the standard deviation is on average 2.9% of the mean with a maximum of 11%.
+```{r}
+repl.stats <- data.frame(matrix(data = NA, ncol = 12, nrow = length(levels(growth$strain_asso))))
+rownames(repl.stats) <- levels(growth$strain_asso)
+names(repl.stats) <- c("pda.mean.rate", "pda.sd.rate", "pda.sd/mean.rate", "lca.mean.rate", "lca.sd.rate", "lca.sd/mean.rate")
+for(i in 1:length(levels(growth$strain_asso))){
+  repl.stats[i,1] <- mean(growth.pda[which(growth.pda$strain_asso == levels(growth$strain_asso)[i]),]$growthrate)
+  repl.stats[i,2] <- sd(growth.pda[which(growth.pda$strain_asso == levels(growth$strain_asso)[i]),]$growthrate)
+  
+  repl.stats[i,4] <- mean(growth.lca[which(growth.lca$strain_asso == levels(growth$strain_asso)[i]),]$growthrate)
+  repl.stats[i,5] <- sd(growth.lca[which(growth.lca$strain_asso == levels(growth$strain_asso)[i]),]$growthrate)
+}
+
+repl.stats$`pda.sd/mean.rate` <- repl.stats$pda.sd.rate/repl.stats$pda.mean.rate
+repl.stats$`lca.sd/mean.rate` <- repl.stats$lca.sd.rate/repl.stats$lca.mean.rate
+
+summary(repl.stats$`pda.sd/mean.rate`)
+summary(repl.stats$`lca.sd/mean.rate`)
+
+
+```
+
+
+Overall modell: Effect of experimental factors on growth rate.
+```{r}
+aov.gr <- aov(growth$growthrate ~ growth$species/growth$strain * growth$Media * growth$asso)
+aov.gr <- aov(growth$growthrate ~ growth$species/growth$strain + growth$Media + growth$asso + growth$Media*growth$species + growth$asso*growth$species + growth$species/growth$strain*growth$Media + growth$species/growth$strain*growth$asso)
+summary(lm(growth$growthrate ~ growth$species/growth$strain + growth$Media + growth$asso + growth$Media*growth$species + growth$asso*growth$species + growth$species/growth$strain*growth$Media + growth$species/growth$strain*growth$asso))
+
+
+sink("GROWTH_ANOVA_growth.txt")
+print("growthrate")
+summary(aov.gr)
+sink()
+
+pdf("GROWTH_Anova_Growth_residuals.pdf")
+plot(aov.gr, title = "growhtrate")
+dev.off()
+```
+
+Checking by strain for differences in growth by co-cultivation and association history.
+```{r}
+growth.ls <- vector("list", length = 2)
+names(growth.ls) <- c("GR_PDA", "GR_LCA")
+growth.ls[[1]] <- dcast(growth.pda, growth.pda$species + growth.pda$strain + growth.pda$replicate + growth.pda$source_asso ~ growth.pda$asso, value.var = "growthrate")
+growth.ls[[2]] <- dcast(growth.lca, growth.lca$species + growth.lca$strain + growth.lca$replicate + growth.lca$source_asso ~ growth.lca$asso, value.var = "growthrate")
+
+
+p.strain <- data.frame(matrix(data = NA, ncol = 4, nrow = length(levels(growth$strain))))
+names(p.strain) <- c(names(growth.ls), "origin_asso", "species")
+rownames(p.strain) <- levels(growth$strain)
+for(j in 1:length(growth.ls)){
+  for(i in 1:length(levels(growth$strain))){
+  rdf <- growth.ls[[j]][which(growth.ls[[j]][,2] == levels(growth$strain)[i]),]
+      p.strain[i,j] <- t.test(rdf$bac, rdf$cured, paired = T, na.rm = T)$p.value
+      p.strain[i,3] <- rdf[1,4]
+      p.strain[i,4] <- as.character(rdf[1,1])
+  }
+}
+
+t.strain <- data.frame(matrix(data = NA, ncol = 3, nrow = length(levels(growth$strain))))
+names(t.strain) <- c(names(growth.ls), "origin_asso")
+rownames(t.strain) <- levels(growth$strain)
+for(j in 1:length(growth.ls)){
+  for(i in 1:length(levels(growth$strain))){
+  rdf <- growth.ls[[j]][which(growth.ls[[j]][,2] == levels(growth$strain)[i]),]
+      t.strain[i,j] <- t.test(rdf$bac, rdf$cured, paired = T, na.rm = T)$statistic
+      t.strain[i,3] <- rdf[1,4]
+  }
+}
+
+
+diff.strain <- data.frame(matrix(data = NA, ncol = 3, nrow = length(levels(growth$strain))))
+names(diff.strain) <- c(names(growth.ls), "origin_asso")
+rownames(diff.strain) <- levels(growth$strain)
+for(j in 1:length(growth.ls)){
+  for(i in 1:length(levels(growth$strain))){
+  rdf <- growth.ls[[j]][which(growth.ls[[j]][,2] == levels(growth$strain)[i]),]
+      diff.strain[i,j] <- t.test(rdf$bac, rdf$cured, paired = T, na.rm = T)$estimate
+      diff.strain[i,3] <- rdf[1,4]
+  }
+}
+write.csv(p.strain, file = "GROWTH_p.strain.csv")
+write.csv(t.strain, file = "GROWTH_t.strain.csv")
+write.csv(diff.strain, file = "GROWTH_diff.strain.csv")
+
+```
+
+1) Is there a difference in growth rate comparing cured (pure fungal cultures) and cocultivated fungal cultures (on strain level)?
+```{r}
+tt.cured.bac.strains <- data.frame(matrix(data = NA, ncol = 6, nrow = length(levels(growth$strain))))
+rownames(tt.cured.bac.strains) <- levels(growth$strain)
+names(tt.cured.bac.strains) <- c("mean.rate.pda.cured", "mean.rate.pda.bac", "p.value.rate.pda", "mean.rate.lca.cured", "mean.rate.lca.bac", "p.value.rate.lca")
+
+for(i in 1:length(levels(growth$strain))){
+  bac <- growth.pda$growthrate[intersect(which(growth.pda$strain == levels(growth$strain)[i]), which(growth.pda$asso == "bac"))]
+  cured <- growth.pda$growthrate[intersect(which(growth.pda$strain == levels(growth$strain)[i]), which(growth.pda$asso == "cured"))]
+  tt.cured.bac.strains$mean.rate.pda.cured[i] <- mean(cured, na.rm = T)
+  tt.cured.bac.strains$mean.rate.pda.bac[i] <- mean(bac, na.rm = T)
+  tt.cured.bac.strains$p.value.rate.pda[i] <- t.test(bac, cured)$p.value
+  
+  bac <- growth.lca$growthrate[intersect(which(growth.lca$strain == levels(growth$strain)[i]), which(growth.lca$asso == "bac"))]
+  cured <- growth.lca$growthrate[intersect(which(growth.lca$strain == levels(growth$strain)[i]), which(growth.lca$asso == "cured"))]
+  tt.cured.bac.strains$mean.rate.lca.cured[i] <- mean(cured, na.rm = T)
+  tt.cured.bac.strains$mean.rate.lca.bac[i] <- mean(bac, na.rm = T)
+  tt.cured.bac.strains$p.value.rate.lca[i] <- t.test(bac, cured)$p.value
+}
+
+
+#rownames(tt.cured.bac.strains)[which(tt.cured.bac.strains$p.value.rate.pda < 0.05)]
+#rownames(tt.cured.bac.strains)[which(tt.cured.bac.strains$p.value.rate.pda < 0.1)]
+#rownames(tt.cured.bac.strains)[which(tt.cured.bac.strains$p.value.rate.lca < 0.05)]
+#rownames(tt.cured.bac.strains)[which(tt.cured.bac.strains$p.value.rate.lca < 0.1)]
+
+tt.cured.bac.strains$result.pda.growthrate <- rep("n.s.", nrow(tt.cured.bac.strains))
+tt.cured.bac.strains$result.lca.growthrate <- rep("n.s.", nrow(tt.cured.bac.strains))
+for(i in 1:nrow(tt.cured.bac.strains)){
+  if(tt.cured.bac.strains$p.value.rate.pda[i] < 0.05){
+    if(tt.cured.bac.strains$mean.rate.pda.cured[i] > tt.cured.bac.strains$mean.rate.pda.bac[i]){
+      tt.cured.bac.strains$result.pda.growthrate[i] <- "cured.bigger.bac"
+    }else{
+      tt.cured.bac.strains$result.pda.growthrate[i] <- "cured.smaller.bac"
+    }
+  }
+  if(tt.cured.bac.strains$p.value.rate.lca[i] < 0.05){
+    if(tt.cured.bac.strains$mean.rate.lca.cured[i] > tt.cured.bac.strains$mean.rate.lca.bac[i]){
+      tt.cured.bac.strains$result.lca.growthrate[i] <- "cured.bigger.bac"
+    }else{
+      tt.cured.bac.strains$result.lca.growthrate[i] <- "cured.smaller.bac"
+    }
+  }
+}
+
+table(tt.cured.bac.strains$result.pda.growthrate)
+aggregate((tt.cured.bac.strains$mean.rate.pda.cured-tt.cured.bac.strains$mean.rate.pda.bac), list(tt.cured.bac.strains$result.pda.growthrate), FUN = summary)
+aggregate((tt.cured.bac.strains$mean.rate.pda.cured-tt.cured.bac.strains$mean.rate.pda.bac), list(tt.cured.bac.strains$result.pda.growthrate), FUN = sd)
+wilcox.test(abs(tt.cured.bac.strains$mean.rate.pda.cured-tt.cured.bac.strains$mean.rate.pda.bac)[which(tt.cured.bac.strains$result.pda.growthrate == "cured.bigger.bac")], abs(tt.cured.bac.strains$mean.rate.pda.cured-tt.cured.bac.strains$mean.rate.pda.bac)[which(tt.cured.bac.strains$result.pda.growthrate == "cured.smaller.bac")])
+
+table(tt.cured.bac.strains$result.lca.growthrate)
+aggregate((tt.cured.bac.strains$mean.rate.lca.cured-tt.cured.bac.strains$mean.rate.lca.bac), list(tt.cured.bac.strains$result.lca.growthrate), FUN = summary)
+aggregate((tt.cured.bac.strains$mean.rate.lca.cured-tt.cured.bac.strains$mean.rate.lca.bac), list(tt.cured.bac.strains$result.lca.growthrate), FUN = sd)
+wilcox.test((tt.cured.bac.strains$mean.rate.lca.cured-tt.cured.bac.strains$mean.rate.lca.bac)[which(tt.cured.bac.strains$result.lca.growthrate == "cured.bigger.bac")], (tt.cured.bac.strains$mean.rate.lca.cured-tt.cured.bac.strains$mean.rate.lca.bac)[which(tt.cured.bac.strains$result.lca.growthrate == "cured.smaller.bac")])
+
+write.csv(tt.cured.bac.strains, file = "GROWTH_tt.cured.bac.strains.csv")
+```
+
+
+is there a pattern within species?
+--> No, there is no pattern in growth rates with regards to bacterial cocultivation or pure cultures. Differences are solely for strains.
+There is no difference in growthrate on PDA among Linnemannia and Entomortierella species.
+
+```{r}
+growth.mean <- data.frame(matrix(data = NA, ncol = 3, nrow = length(levels(growth$strain_asso))))
+names(growth.mean) <- c("species", "growthrate.pda", "growthrate.lca")
+growth.mean$strain_asso <- levels(growth$strain_asso)
+
+species <- cbind(as.character(growth.lca$species[!duplicated(growth.lca$strain_asso)]), as.character(growth.lca$strain_asso)[!duplicated(growth.lca$strain_asso)], as.character(growth.lca$asso[!duplicated(growth.lca$strain_asso)]), as.character(growth.lca$strain[!duplicated(growth.lca$strain_asso)]))
+species <- species[match(growth.mean$strain_asso, species[,2]),]
+
+growth.mean$species <- species[,1]
+growth.mean$asso <- species[,3]
+growth.mean$strain <- species[,4]
+
+
+
+for(i in 1:length(levels(growth$strain_asso))){
+  growth.mean$growthrate.pda <- aggregate(growth.pda$growthrate, list(growth.pda$strain_asso), FUN = mean, na.rm = T)[,2]
+  growth.mean$growthrate.lca <- aggregate(growth.lca$growthrate, list(growth.lca$strain_asso), FUN = mean, na.rm = T)[,2]
+}
+
+growth.mean.ls <- vector("list", length=2)
+names(growth.mean.ls) <- names(growth.mean)[2:3]
+growth.mean.ls[[1]] <- dcast(growth.mean, growth.mean$species + growth.mean$strain ~ growth.mean$asso, value.var = "growthrate.pda")
+growth.mean.ls[[2]] <- dcast(growth.mean, growth.mean$species + growth.mean$strain ~ growth.mean$asso, value.var = "growthrate.lca")
+
+
+ptt.species.pval <- c()
+for(i in 1:length(growth.mean.ls)){
+  print(t.test(growth.mean.ls[[i]]$bac, growth.mean.ls[[i]]$cured, paired = T))
+  ptt.species.pval <- append(ptt.species.pval, t.test(growth.mean.ls[[i]]$bac, growth.mean.ls[[i]]$cured, paired = T)$p.value, length(ptt.species.pval))
+}
+
+
+
+#Is there a difference among Linnemannia and Entomortierella?
+for(i in 1:length(growth.mean.ls)){
+  growth.mean.ls[[i]]$genus <- rep("Linnemannia", nrow(growth.mean.ls[[i]]))
+  growth.mean.ls[[i]]$genus[which(growth.mean.ls[[i]]$`growth.mean$species` == "E.Galaxi")] <- "E.galaxiae"
+  growth.mean.ls[[i]]$genus <- as.factor(growth.mean.ls[[i]]$genus)
+}
+
+for(i in 1:length(growth.mean.ls)){
+  print(t.test(growth.mean.ls[[i]]$cured ~ growth.mean.ls[[i]]$genus))
+}
+
+for(i in 1:length(growth.mean.ls)){
+  print(t.test(growth.mean.ls[[i]]$bac ~ growth.mean.ls[[i]]$genus))
+}
+
+
+for(i in 1:length(growth.mean.ls)){
+  growth.mean.ls[[i]]$diff <- growth.mean.ls[[i]]$cured-growth.mean.ls[[i]]$bac
+  print(t.test(growth.mean.ls[[i]]$diff ~ growth.mean.ls[[i]]$genus))
+}
+
+```
+
+
+Visualization of growth
+* Main text: boxplots separate for species (A-F) to show the growthrate. For each strain, pure and co-cultures show different boxes.
+* Supplement: Heatmaps to illustrate the difference among co-cultivated and pure culture biomass and growth rate arranged by species. 
+
+```{r}
+strainfarbe <- read.delim("strain_species_color_3.txt")
+
+for(i in levels(growth.lca$species)){
+  rdf <- growth.lca[which(growth.lca$species == i),]
+  names(rdf)[6] <- "Growthrate"
+  names(rdf)[2] <- "Strain"
+  png(paste("Growth_lca_boxplot_growthrate_",i, "_.png", sep = ""))
+  print(ggplot(rdf, aes(x=Strain, y=Growthrate, fill = asso)) + geom_boxplot(outlier.shape = NA) + scale_fill_manual(values = as.character(strainfarbe[which(strainfarbe$Species == i), 3:2])) + scale_y_continuous(limits = c(0, 10.5)) + theme(legend.position = "none", axis.text=element_text(size=20), axis.title=element_text(size=22,face="bold"), panel.background = element_rect(fill = "white"), panel.grid = element_line(colour = "gray90"), axis.line = element_line(colour = "gray20")) + labs(x = "", y = "Radial growth rate [mm per day]"))
+  dev.off()
+}
+
+
+for(i in levels(growth.pda$species)){
+  rdf <- growth.pda[which(growth.pda$species == i),]
+  png(paste("Growth_pda_boxplot_growthrate_",i, "_.png", sep = ""))
+  print(ggplot(rdf, aes(x=strain, y=growthrate, fill = asso)) + geom_boxplot(outlier.shape = NA) + scale_fill_manual(values = as.character(strainfarbe[which(strainfarbe$Species == i), 3:2])) + scale_y_continuous(limits = c(0, 10)) + theme(legend.position = "none", axis.text=element_text(size=20), axis.title=element_text(size=22,face="bold"), panel.background = element_rect(fill = "white"), panel.grid = element_line(colour = "gray90"), axis.line = element_line(colour = "gray20")) + labs(x = "", y = "Radial growth rate [mm per day]"))
+  dev.off()
+}
+
+
+png("Growth_legend.png")
+plot.new()
+legend("topleft", legend = c("", "", "", "", "", "", "L. exigua", "L. gamsii", "L. hyalina", "L. sclerotiella", "L. solitaria", "E. galaxiae"), fill = c(strainfarbe$farbe_bac[c(1,2,3,5,6,4)], strainfarbe$farbe_cured[c(1,2,3,5,6,4)]), cex = 1.5, bty = "n", ncol = 2, text.font = 3)
+dev.off()
+
+x11(); plot.new(); legend(x='topleft',legend = c(bquote(.("Co-culture with")), bquote("Pure fungal culture"), bquote("P. helmanticensis")), text.font=c(1,1,3), ncol = 2, bty = "n")
+
+
+
+```
+
+
+Creating a heatmap for the growth differences among cured and inoculated experiments.
+```{r}
+my_palette <- colorRampPalette(c("gray90", "gray10"))(n = 20)
+heatmap.df <- as.matrix(cbind(growth.mean.ls[[1]][,3:4], growth.mean.ls[[2]][,3:4]))
+rownames(heatmap.df) <- growth.mean.ls$growthrate.pda$`growth.mean$strain`
+
+png("Growth_heatmap_growthrate.png")
+heatmap(heatmap.df, scale = "none", Rowv = NA, Colv = NA, col = my_palette, cexCol = 1.5)
+dev.off()
+
+##Legend. I saved it manually via x11()
+
+farbwerte <- c(growth.mean.ls[[2]]$bac, growth.mean.ls[[2]]$cured, growth.mean.ls[[4]]$bac, growth.mean.ls[[4]]$cured)
+layout(matrix(1:2,ncol=2), width = c(2,1),height = c(1,1))
+plot(1:20, 1:20, pch = 19, cex=2, col = my_palette)
+
+legend_image <- as.raster(matrix(my_palette, ncol=1))
+plot(c(0,2),c(0,1),type = 'n', axes = F,xlab = '', ylab = '', main = 'legend title')
+text(x=1.5, labels = round(seq(min(farbwerte),max(farbwerte),l=5), digits = 1), y = seq(0,1,l=5))
+rasterImage(legend_image, 0, 0, 1,1)
+
+farbwerte <- c(growth.mean.ls[[1]]$bac, growth.mean.ls[[1]]$cured, growth.mean.ls[[3]]$bac, growth.mean.ls[[3]]$cured)
+layout(matrix(1:2,ncol=2), width = c(2,1),height = c(1,1))
+plot(1:20, 1:20, pch = 19, cex=2, col = my_palette)
+
+legend_image <- as.raster(matrix(my_palette, ncol=1))
+plot(c(0,2),c(0,1),type = 'n', axes = F,xlab = '', ylab = '', main = 'legend title')
+text(x=1.5, labels = round(seq(min(farbwerte),max(farbwerte),l=5), digits = 1), y = seq(0,1,l=5))
+rasterImage(legend_image, 0, 0, 1,1)
+
+```
+

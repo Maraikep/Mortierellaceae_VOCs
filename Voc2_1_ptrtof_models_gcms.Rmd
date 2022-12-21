@@ -1,0 +1,608 @@
+---
+title: "voc2_ptr"
+author: "Maraike Probst"
+date: "6 12 2021"
+output: html_document
+---
+
+packages
+```{r}
+library(reshape2)
+library(vegan)
+library(MASS)
+library(WriteXLS)
+library(biotools)
+library(ggplot2)
+library(gplots)
+library(sjstats)
+library(multcomp)
+library(heplots)
+library(dendextend)
+```
+
+
+loading data
+```{r}
+rm(list = ls())
+load("ptr.nc.RData")
+vocs <- c(15:127)
+
+ptr.nc <- ptr.nc[which(ptr.nc$class_name != "PDA"),]
+ptr.nc$type <- paste(ptr.nc$class_name, ptr.nc$type, sep = "_")
+for(i in c(4,6,7,8,10,11)){
+  ptr.nc[,i] <- as.factor(as.character(ptr.nc[,i]))
+}
+ptr.nc$species_trt <- as.factor(paste(ptr.nc$class_name, ptr.nc$trt, sep = "_"))
+ptr.nc$strain_trt <- as.factor(paste(ptr.nc$type, ptr.nc$trt, sep = "_"))
+
+
+```
+
+
+Models predicting the contribution of the fungal and bacterial culture in co-culture.
+Model 1: co ~ bac + fun
+Model 2: co_selected bacvocs ~ bac
+Model 3: co-predicted bac contribution = fun
+
+Model 1
+```{r}
+ptr.strains <- data.frame(matrix(data = NA, ncol = length(vocs), nrow = length(levels(ptr.nc$strain_trt))))
+rownames(ptr.strains) <- levels(ptr.nc$strain_trt)
+names(ptr.strains) <- names(ptr.nc)[vocs]
+for(i in 1:length(vocs)){
+  ptr.strains[,i] <- aggregate(ptr.nc[,vocs[i]], list(ptr.nc$strain_trt), FUN = median)[,2]
+}
+
+strain.ls <- vector("list", length = (length(levels(ptr.nc$type))-1))
+names(strain.ls) <- levels(ptr.nc$type)[-1]
+for(i in 1:length(strain.ls)){
+  strain.ls[[i]] <- data.frame(matrix(data = NA, ncol = 3, nrow = ncol(ptr.strains)))
+  rownames(strain.ls[[i]]) <- names(ptr.strains)
+  names(strain.ls[[i]]) <- c("bacteria", "fstrain", "coculture")
+}
+
+for(i in 1:length(strain.ls)){
+  strain.ls[[i]]$bacteria <- as.numeric(ptr.strains[1,])
+  print(rownames(ptr.strains)[seq(2,51,by = 2)[i]])
+  print(rownames(ptr.strains)[((seq(2,51,by = 2)[i])+1)])
+  strain.ls[[i]]$coculture <- as.numeric(ptr.strains[seq(2,51,by = 2)[i],])
+  strain.ls[[i]]$fstrain <- as.numeric(ptr.strains[((seq(2,51,by = 2)[i])+1),])
+}
+
+###calulating a linear model
+model1.ls <- vector("list", length = length(strain.ls))
+names(model1.ls) <- names(strain.ls)
+for(i in 1:length(model1.ls)){
+  model1.ls[[i]] <- lm(strain.ls[[i]]$coculture ~ strain.ls[[i]]$fstrain + strain.ls[[i]]$bacteria)
+}
+
+pdf("VOC_model_ov.model.1_overview.pdf")
+for(i in 1:length(model1.ls)){
+  test <- data.frame(strain.ls[[i]], predict(model1.ls[[i]], interval = "prediction"))
+  print(ggplot(test, aes(y=coculture, x=fit, label = rownames(test))) + geom_point() + geom_text() + stat_smooth(method = lm) + geom_line(aes(y=lwr), color = "red", linetype = "dashed") + geom_line(aes(y=upr), color = "red", linetype = "dashed"))
+}
+dev.off()
+
+
+for(i in 1:length(model1.ls)){
+  test <- data.frame(strain.ls[[i]], predict(model1.ls[[i]], interval = "prediction"))
+  tiff(paste("VOC_model_ov.model.1_overview_", names(strain.ls)[i], ".tiff", sep = ""))
+  print(ggplot(test, aes(y=coculture, x=fit, label = rownames(test))) + geom_point() + geom_text(size = 6) + stat_smooth(method = lm) + geom_line(aes(y=lwr), color = "red", linetype = "dashed") + geom_line(aes(y=upr), color = "red", linetype = "dashed") + theme(text = element_text(size = 25)))
+  dev.off()
+}
+
+
+ov.model.1 <- data.frame(matrix(data = NA, nrow = length(model1.ls), ncol = 10))
+names(ov.model.1) <- c("Intercept", "p.intercept", "coefficient_fun", "Stderror.coefficient_fun", "p.coefficient_fun", "coefficient_bac", "Stderror.coefficient_bac", "p.coefficient_bac", "R2", "adj.R2")
+rownames(ov.model.1) <- names(model1.ls)
+for(i in 1:length(model1.ls)){
+  ov.model.1$Intercept[i] <- model1.ls[[i]]$coefficients[1]
+  ov.model.1$coefficient_fun[i] <- model1.ls[[i]]$coefficients[2]
+  ov.model.1$coefficient_bac[i] <- model1.ls[[i]]$coefficients[3]
+  ov.model.1$Stderror.coefficient_fun[i] <- summary(model1.ls[[i]])$coefficients[2,2]
+  ov.model.1$Stderror.coefficient_bac[i] <- summary(model1.ls[[i]])$coefficients[3,2]
+  ov.model.1$p.coefficient_fun[i] <- summary(model1.ls[[i]])$coefficients[2,4]
+  ov.model.1$p.coefficient_bac[i] <- summary(model1.ls[[i]])$coefficients[3,4]
+  ov.model.1$adj.R2[i] <- summary(model1.ls[[i]])$adj.r.squared
+  ov.model.1$R2[i] <- summary(model1.ls[[i]])$r.squared
+  ov.model.1$p.intercept[i] <- summary(model1.ls[[i]])$coefficients[1,4]
+}
+write.csv(ov.model.1, file = "VOC_model_ov.model.1.csv")
+#save(ov.model.1, file = "VOC_model_ov.model.1.RData")
+
+pdf("VOC_model_ov.model.1_residuals.pdf")
+par(mfrow = c(2,2))
+for(i in 2:length(model1.ls)){
+  plot(model1.ls[[i]], main = names(model1.ls)[i])
+}
+dev.off()
+
+
+
+#Fitted values into the boxplots of measured data
+fits.df <- data.frame(matrix(data = NA, ncol = length(model1.ls), nrow = 113))
+names(fits.df) <- names(model1.ls)
+rownames(fits.df) <- names(ptr.nc)[vocs]
+for(i in 1:length(model1.ls)){
+  fits.df[,i] <- predict(model1.ls[[i]])
+}
+
+fits.df <- data.frame(t(fits.df))
+```
+
+
+Figure 5
+(Code above needed.)
+```{r}
+sel_vocs <- c("ms33.0340", "ms31.0182", "ms72.0526", "ms44.0219", "ms90.0633", "ms48.0528", "ms39.0239", "ms60.0527", "ms61.0283", "ms105.0717", "ms46.0370", "ms28.0187", "ms93.0905", "ms74.0684")
+sel_vocs2 <- c("ms105.0717", "ms33.0340", "ms31.0182", "ms90.0633", "ms48.0528", "ms61.0283")
+x02 <- c(1:25)-0.3
+x12 <- c(1:25)+0.3
+
+
+farbe <- data.frame(levels(ptr.nc$strain_trt))
+farbe$farbe <- c("black", rep("#bebada", 10), rep("#fdb462", 10), rep("#fb8072", 8), rep("#ffffb3", 6), rep("#80b1d3", 6), rep("#b3de69", 10))
+
+ptr.nc_2 <- ptr.nc[which(ptr.nc$trt == "+"),]
+ptr.nc_2$strain_trt <- as.character(ptr.nc_2$strain_trt)
+ptr.nc_2$strain_trt <- factor(ptr.nc_2$strain_trt, levels = levels(as.factor(ptr.nc_2$strain_trt))[c(1:14,20:25,15:19)], ordered = T)
+
+ptr.nc_pures <- ptr.nc[which(ptr.nc$trt == "c"),]
+ptr.nc_pures$strain_trt <- as.character(ptr.nc_pures$strain_trt)
+ptr.nc_pures$strain_trt <- factor(as.character(ptr.nc_pures$strain_trt), levels = levels(as.factor(ptr.nc_pures$strain_trt))[c(1:14,20:25,15:19)], ordered = T)
+
+pures <- data.frame(matrix(data = NA, ncol = ncol(fits.df), nrow = length(levels(ptr.nc_pures$strain_trt))))
+rownames(pures) <- levels(ptr.nc_pures$strain_trt)
+names(pures) <- names(fits.df)
+for(i in 1:ncol(fits.df)){
+  pures[,which(names(pures) == names(fits.df)[i])] <- aggregate(ptr.nc_pures[,which(names(ptr.nc_pures) == names(fits.df)[i])], list(ptr.nc_pures$strain_trt), FUN = mean)[,2]
+}
+
+
+pdf("VOC_model_Boxplots_model.1_outliers.pdf")
+par(mar = c(12,5,2,2))
+for(i in sel_vocs){
+  y0 <- c()
+  ypures <- c()
+  for(j in 1:nrow(fits.df)){
+    y0 <- append(y0, c(fits.df[j, which(names(fits.df) == i)]), length(y0))
+    ypures <- append(ypures, c(pures[j, which(names(pures) == i)]), length(ypures))
+  }
+  boxplot(ptr.nc_2[,which(names(ptr.nc_2) == i)] ~ ptr.nc_2$strain_trt, las = 3, ylab = i, col = farbe$farbe[seq(2,nrow(farbe), 2)], xlab = "")
+  arrows(x0=x02, x1=x12, y0=y0, y1=y0, code = 3, angle = 90, length = 0.02, col = "red")
+  arrows(x0=x02, x1=x12, y0=ypures, y1=ypures, code = 3, angle = 90, length = 0.02, col = "royalblue")
+}
+dev.off()
+
+for(i in 1:length(sel_vocs2)){
+  png(paste("VOC_model_Boxplots_model.1_outliers_", sel_vocs2[i], ".png", sep = ""), height = 450, width = 650)
+  par(mar = c(7,5,2,2))
+  y0 <- c()
+  ypures <- c()
+  for(j in 1:nrow(fits.df)){
+    y0 <- append(y0, c(fits.df[j, which(names(fits.df) == sel_vocs2[i])]), length(y0))
+    ypures <- append(ypures, c(pures[j, which(names(pures) == sel_vocs2[i])]), length(ypures))
+  }
+  boxplot(ptr.nc_2[,which(names(ptr.nc_2) == sel_vocs2[i])] ~ ptr.nc_2$strain_trt, las = 3, ylab = paste(sel_vocs2[i], " [ppbV]", sep = ""), col = farbe$farbe[seq(2,nrow(farbe), 2)], xlab = "", cex.axis = 1.5, names = substr(gsub("[_+]", "", levels(ptr.nc_2$strain_trt)), 3, nchar(gsub("[_+]", "", levels(ptr.nc_2$strain_trt)))) , cex.lab = 1.8)
+  arrows(x0=x02, x1=x12, y0=y0, y1=y0, code = 3, angle = 90, length = 0.02, col = "red", lwd = 2.0)
+  arrows(x0=x02, x1=x12, y0=ypures, y1=ypures, code = 3, angle = 90, length = 0.02, col = "royalblue", lwd = 2.0)
+  dev.off()
+}
+
+png("VOC_model_Boxplot_VOCS_legend.png")
+plot.new()
+legend("topleft", legend = c("L. exigua", "L. gamsii", "L. hyalina", "L. sclerotiella", "L. solitaria", "E. galaxiae"), fill = c("#bebada", "#fdb462", "#fb8072", "#ffffb3", "#80b1d3", "#b3de69"), bty = "n", cex = 1.8, ncol = 2, text.font = 3)
+dev.off()
+
+```
+
+
+
+Model 2
+```{r}
+ptr.strains <- data.frame(matrix(data = NA, ncol = length(vocs), nrow = length(levels(ptr.nc$strain_trt))))
+rownames(ptr.strains) <- levels(ptr.nc$strain_trt)
+names(ptr.strains) <- names(ptr.nc)[vocs]
+for(i in 1:length(vocs)){
+  ptr.strains[,i] <- aggregate(ptr.nc[,vocs[i]], list(ptr.nc$strain_trt), FUN = median)[,2]
+}
+
+ptr.strains.bi <- ptr.strains
+ptr.strains.bi[ptr.strains.bi > 0] <- 1
+ptr.strains.bi[ptr.strains.bi < 0] <- -1
+
+ptr.strains.sel.growth.ls <- vector("list", length=length(levels(ptr.nc$strain_trt)[seq(3,51,by = 2)]))
+names(ptr.strains.sel.growth.ls) <- levels(ptr.nc$strain_trt)[seq(3,51,by = 2)]
+for(i in 1:length(ptr.strains.sel.growth.ls)){
+  rv <- c()
+  for(j in 1:ncol(ptr.strains.bi)){
+    if(ptr.strains.bi[seq(3,51,by = 2)[i],j] == 0){
+      if(ptr.strains.bi[1,j] != 0){#if the cured is zero and the bacteria is not zero
+        rv <- append(rv, names(ptr.strains.bi)[j], length(rv))
+      }
+    }
+  }
+  #print(names(ptr.strains.sel.growth.ls)[i])
+  #print(length(rv))
+  #print(length(which(rv %in% growth_sel)))
+  ptr.strains.sel.growth.ls[[i]] <- ptr.nc[which(ptr.nc$strain_trt == names(ptr.strains.sel.growth.ls)[i]),which(names(ptr.nc) %in% rv)]
+  #print(dim(ptr.strains.sel.growth.ls[[i]]))
+}
+
+strain.ls <- vector("list", length = length(ptr.strains.sel.growth.ls))
+names(strain.ls) <- names(ptr.strains.sel.growth.ls)
+model2.ls <- vector("list", length = length(ptr.strains.sel.growth.ls))
+names(model2.ls) <- names(ptr.strains.sel.growth.ls)
+
+for(i in 1:length(strain.ls)){
+  strain.ls[[i]] <- data.frame(matrix(data = NA, ncol = 2, nrow = ncol(ptr.strains.sel.growth.ls[[i]])))
+  rownames(strain.ls[[i]]) <- names(ptr.strains.sel.growth.ls[[i]])
+  names(strain.ls[[i]]) <- c("bacteria", "coculture")
+  #print(names(ptr.strains.sel.growth.ls)[i])
+  #print(levels(ptr.nc$type)[i+1])
+  for(j in 1:ncol(ptr.strains.sel.growth.ls[[i]])){
+    rdf <- ptr.nc[which(ptr.nc$type == levels(ptr.nc$type)[i+1]),]
+    rdf <- dcast(rdf, rdf$replica + rdf$cycle ~ rdf$trt, value.var = names(ptr.strains.sel.growth.ls[[i]])[j])
+    strain.ls[[i]]$coculture[j] <- mean(rdf$`+`, na.rm = T)
+    strain.ls[[i]]$bacteria[j] <- mean(ptr.nc[which(ptr.nc$class_name == "Bacteria"),which(names(ptr.nc) == names(ptr.strains.sel.growth.ls[[i]])[j])], na.rm = T)
+  }
+  co <- strain.ls[[i]]$coculture
+  bac <- strain.ls[[i]]$bacteria
+  model2.ls[[i]] <- lm(co ~ bac)
+}
+
+
+ov.model.2 <- data.frame(matrix(data = NA, nrow = length(model2.ls), ncol = 8))
+names(ov.model.2) <- c("Intercept", "p.intercept", "coefficient", "Stderror.coefficient", "p.coefficient", "R2", "adj.R2", "VOCs")
+rownames(ov.model.2) <- names(model2.ls)
+for(i in 1:length(model2.ls)){
+  ov.model.2$Intercept[i] <- model2.ls[[i]]$coefficients[1]
+  ov.model.2$coefficient[i] <- model2.ls[[i]]$coefficients[2]
+  ov.model.2$Stderror.coefficient[i] <- summary(model2.ls[[i]])$coefficients[2,2]
+  ov.model.2$adj.R2[i] <- summary(model2.ls[[i]])$adj.r.squared
+  ov.model.2$R2[i] <- summary(model2.ls[[i]])$r.squared
+  ov.model.2$p.intercept[i] <- summary(model2.ls[[i]])$coefficients[1,4]
+  ov.model.2$p.coefficient[i] <- summary(model2.ls[[i]])$coefficients[2,4]
+  ov.model.2$VOCs[i] <- nrow(strain.ls[[i]])
+}
+#save(ov.model.2, file = "VOC_model_ov.model.2.RData")
+write.csv(ov.model.2, file = "VOC_model_ov.model.2.csv")
+
+pdf("VOC_model_ov.model.2_residuals.pdf")
+par(mfrow = c(2,2))
+for(i in 2:length(model2.ls)){
+  plot(model2.ls[[i]], main = names(model2.ls)[i])
+}
+dev.off()
+
+
+pdf("VOC_model_ov.model.2_overview.pdf")
+for(i in 1:length(model2.ls)){
+  test <- data.frame(strain.ls[[i]], predict(model2.ls[[i]], interval = "prediction"))
+  print(ggplot(test, aes(y=coculture, x=fit, label = rownames(test))) + geom_point() + geom_text() + stat_smooth(method = lm) + geom_line(aes(y=lwr), color = "red", linetype = "dashed") + geom_line(aes(y=upr), color = "red", linetype = "dashed"))
+}
+dev.off()
+
+
+m <- c()
+mmedian <- c()
+for(i in 1:length(strain.ls)){
+  m <- append(m, mean(strain.ls[[i]]$bacteria), length(m))
+  mmedian <- append(mmedian, median(strain.ls[[i]]$bacteria), length(mmedian))
+}
+
+
+```
+
+
+Model3
+for this chunk, the above chunk is needed.
+```{r}
+sel.vocs.fun.ls <- vector("list", length=length(levels(ptr.nc$strain_trt)[seq(3,51,by = 2)]))
+names(sel.vocs.fun.ls) <- levels(ptr.nc$strain_trt)[seq(3,51,by = 2)]
+for(i in 1:length(sel.vocs.fun.ls)){
+  rv <- c()
+  for(j in 1:ncol(ptr.strains.bi)){
+    if(ptr.strains.bi[seq(3,51,by = 2)[i],j] > 0){
+      if(ptr.strains.bi[1,j] >= 0){#if the fungus produces and the bacterium does not consume
+        rv <- append(rv, names(ptr.strains.bi)[j], length(rv))
+      }
+    }
+  }
+  sel.vocs.fun.ls[[i]] <- ptr.nc[which(ptr.nc$strain_trt == names(sel.vocs.fun.ls)[i]),which(names(ptr.nc) %in% rv)]
+}
+
+fungal.strain.ls <- vector("list", length = length(sel.vocs.fun.ls))
+names(strain.ls) <- names(sel.vocs.fun.ls)
+model3.ls <- vector("list", length = length(sel.vocs.fun.ls))
+names(model3.ls) <- names(sel.vocs.fun.ls)
+for(i in 1:length(fungal.strain.ls)){
+  fungal.strain.ls[[i]] <- data.frame(matrix(data = NA, ncol = 4, nrow = ncol(sel.vocs.fun.ls[[i]])))
+  rownames(fungal.strain.ls[[i]]) <- names(sel.vocs.fun.ls[[i]])
+  names(fungal.strain.ls[[i]]) <- c("fungus", "coculture", "bacteria", "predict")
+  for(j in 1:ncol(sel.vocs.fun.ls[[i]])){
+    rdf <- ptr.nc[which(ptr.nc$type == levels(ptr.nc$type)[i+1]),]
+    rdf <- dcast(rdf, rdf$replica + rdf$cycle ~ rdf$trt, value.var = names(sel.vocs.fun.ls[[i]])[j])
+    fungal.strain.ls[[i]]$coculture[j] <- mean(rdf$`+`, na.rm = T)
+    fungal.strain.ls[[i]]$fungus[j] <- mean(rdf$c, na.rm = T)
+    fungal.strain.ls[[i]]$bacteria[j] <- mean(ptr.nc[which(ptr.nc$class_name == "Bacteria"),which(names(ptr.nc) == names(sel.vocs.fun.ls[[i]])[j])], na.rm = T)
+  }
+  fungal.strain.ls[[i]]$predict <- predict(model2.ls[[i]], newdata = data.frame(bac = fungal.strain.ls[[i]]$bacteria))
+  fungal.strain.ls[[i]]$coculture.pred <- fungal.strain.ls[[i]]$coculture-fungal.strain.ls[[i]]$predict
+  co.pred <- fungal.strain.ls[[i]]$coculture.pred
+  fungus <- fungal.strain.ls[[i]]$fungus
+  model3.ls[[i]] <- lm(co.pred ~ fungus)
+}
+
+ov.model.3 <- data.frame(matrix(data = NA, nrow = length(model3.ls), ncol = 8))
+names(ov.model.3) <- c("Intercept", "p.intercept", "coefficient", "Stderror.coefficient", "p.coefficient", "R2", "adj.R2", "VOCs")
+rownames(ov.model.3) <- names(model3.ls)
+for(i in 1:length(model3.ls)){
+  ov.model.3$Intercept[i] <- model3.ls[[i]]$coefficients[1]
+  ov.model.3$coefficient[i] <- model3.ls[[i]]$coefficients[2]
+  ov.model.3$Stderror.coefficient[i] <- summary(model3.ls[[i]])$coefficients[2,2]
+  ov.model.3$adj.R2[i] <- summary(model3.ls[[i]])$adj.r.squared
+  ov.model.3$R2[i] <- summary(model3.ls[[i]])$r.squared
+  ov.model.3$p.intercept[i] <- summary(model3.ls[[i]])$coefficients[1,4]
+  ov.model.3$p.coefficient[i] <- summary(model3.ls[[i]])$coefficients[2,4]
+  ov.model.3$VOCs[i] <- nrow(fungal.strain.ls[[i]])
+}
+write.csv(ov.model.3, file = "VOC_model_ov.model.3.csv")
+
+
+
+pdf("VOC_model_Model3_residuals.pdf")
+par(mfrow = c(2,2))
+for(i in 2:length(model3.ls)){
+  plot(model3.ls[[i]], main = names(model3.ls)[i])
+}
+dev.off()
+
+
+pdf("VOC_model_ov.model.3_overview.pdf")
+for(i in 1:length(model3.ls)){
+  test <- data.frame(fungal.strain.ls[[i]], predict(model3.ls[[i]], interval = "prediction"))
+  print(ggplot(test, aes(y=coculture.pred, x=fit, label = rownames(test))) + geom_point() + geom_text() + stat_smooth(method = lm) + geom_line(aes(y=lwr), color = "red", linetype = "dashed") + geom_line(aes(y=upr), color = "red", linetype = "dashed"))
+}
+dev.off()
+
+
+mf <- c()
+mfmedian <- c()
+for(i in 1:length(fungal.strain.ls)){
+  mf <- append(mf, mean(fungal.strain.ls[[i]]$fungus), length(mf))
+  mfmedian <- append(mfmedian, median(fungal.strain.ls[[i]]$fungus), length(mfmedian))
+}
+
+```
+
+
+
+Model4
+to double-check the outliers
+co-culture ~ bacterial prediction + fungal prediction
+the above two chunks are needed to run this chunk.
+THIS MODEL HAS NOT BEEN INCLUDED INTO THE MANUSCRIPT. It simply served as check to again test the outliers.
+```{r}
+pred.co.ls <- vector("list", length = length(model2.ls))
+names(pred.co.ls) <- levels(ptr.nc$strain_trt)[seq(2,51,2)]
+for(i in 1:length(pred.co.ls)){
+  pred.co.ls[[i]] <- data.frame(matrix(data = NA, ncol = 4, nrow = length(vocs)))
+  names(pred.co.ls[[i]]) <- c("bac_contribution", "fungal_contribution", "real_coculture", "co_prediction")
+  rownames(pred.co.ls[[i]]) <- names(ptr.nc)[vocs]
+  rv.bac <- c()
+  rv.fun <- c()
+  for(j in 1:length(vocs)){
+    pred.co.ls[[i]]$real_coculture[j] <- mean(ptr.nc[which(ptr.nc$strain_trt == names(pred.co.ls)[i]), vocs[j]], na.rm = T)
+    rv.bac <- append(rv.bac, mean(ptr.nc[which(ptr.nc$strain_trt == "Bacteria_Bacteria_no"), vocs[j]], na.rm = T), length(rv.bac))
+    rv.fun <- append(rv.fun, mean(ptr.nc[which(ptr.nc$strain_trt == names(model2.ls)[i]), vocs[j]], na.rm = T), length(rv.fun))
+  }
+  pred.co.ls[[i]]$bac_contribution <- predict(model2.ls[[i]], newdata = data.frame(bac = rv.bac))
+  pred.co.ls[[i]]$fungal_contribution <- predict(model3.ls[[i]], newdata = data.frame(fungus = rv.fun))
+  pred.co.ls[[i]]$co_prediction <- pred.co.ls[[i]]$bac_contribution + pred.co.ls[[i]]$fungal_contribution
+}
+
+
+pdf("VOC_model_Model4_overview.pdf")
+for(i in 1:length(pred.co.ls)){
+  test <- data.frame(pred.co.ls[[i]], predict(lm(pred.co.ls[[i]]$real_coculture ~ pred.co.ls[[i]]$co_prediction), interval = "prediction"))
+  print(ggplot(test, aes(y=real_coculture, x=fit, label = rownames(test))) + geom_point() + geom_text() + stat_smooth(method = lm) + geom_line(aes(y=lwr), color = "red", linetype = "dashed") + geom_line(aes(y=upr), color = "red", linetype = "dashed"))
+}
+dev.off()
+
+
+```
+
+
+
+Correlating the lda cetroid distance to the lm coefficients
+The LDA objects can be created from the Voc2_volatilome.Rmd file.
+The file growth_mean_differences.txt contains the growth data (see Voc2_growth.Rmd) and the coefficients of the models (above code). For convenience, these variables were simply exported into one joint file and then correlated. 
+
+```{r}
+#LDA centroid distances
+load("LDA_centroids.RData")
+load("strain.models.df.RData")
+grdiff <- read.delim(file = "growth_mean_differences.txt", header = T)
+
+
+##SI Fig 12
+#Correlation of model coefficients, LDA centroids and fungal daily growth rate.
+pdf("Correlations.pdf")
+par(mfrow = c(3,3), mar = c(5,5,1,1))
+plot(grdiff$coefficient_bac_model1 ~ grdiff$coefficient_fun_model1, pch = 16, xlab = "Bacterial coefficient model 1", ylab = "Fungal coefficient model 1", cex.lab = 1.2, cex.axis = 1.2)
+abline(lm(grdiff$coefficient_bac_model1 ~ grdiff$coefficient_fun_model1), col = "gray")
+legend("topright", legend = c("r = -0.55", "p = 0.005"), bty = "n")
+plot(grdiff$coefficient_bac_model1 ~ grdiff$coefficient_bac_model2, pch = 16, xlab = "Bacterial coefficient model 1", ylab = "Bacterial coefficient model 2", cex.lab = 1.2, cex.axis = 1.2)
+abline(lm(grdiff$coefficient_bac_model1 ~ grdiff$coefficient_bac_model2), col = "gray")
+legend("topleft", legend = c("r = 0.92", "p = 2.5e-5"), bty = "n")
+plot(grdiff$coefficient_fun_model1 ~ grdiff$coefficient_fun_model3, pch = 16, xlab = "Fungal coefficient model 1", ylab = "Fungal coefficient model 3", cex.lab = 1.2, cex.axis = 1.2)
+abline(lm(grdiff$coefficient_fun_model1 ~ grdiff$coefficient_fun_model3), col = "gray")
+legend("topleft", legend = c("r = 0.77", "p = 1.2e-5"), bty = "n")
+plot(grdiff$coefficient_bac_model1 ~ sqrt(rowSums(centro2)), pch = 16, xlab = "Bacterial coefficient model 1", ylab = "LDA centroid distance", cex.lab = 1.2, cex.axis = 1.2)
+legend("topleft", legend = c("r = 0.58", "p = 0.003"), bty = "n")
+abline(lm(grdiff$coefficient_bac_model1 ~ sqrt(rowSums(centro2))), col = "gray")
+plot(grdiff$coefficient_fun_model1 ~ sqrt(rowSums(centro2)), pch = 16, xlab = "Fungal coefficient model 1", ylab = "LDA centroid distance", cex.lab = 1.2, cex.axis = 1.2)
+legend("topleft", legend = c("r = -0.03", "p = 0.90"), bty = "n")
+plot.new()
+plot(grdiff$coefficient_bac_model1 ~ grdiff$diffgr, pch = 16, xlab = "Bacterial coefficient model 1", ylab = "Difference growthrate", cex.lab = 1.2, cex.axis = 1.2)
+legend("topleft", legend = c("rho = -0.14", "p = 0.51"), bty = "n")
+plot(grdiff$coefficient_fun_model1 ~ grdiff$diffgr, pch = 16, xlab = "Fungal coefficient model 1", ylab = "Difference growthrate", cex.lab = 1.2, cex.axis = 1.2)
+legend("topleft", legend = c("rho = 0.29", "p = 0.16"), bty = "n")
+dev.off()
+
+cor.test(grdiff$coefficient_bac_model1, grdiff$coefficient_fun_model1)
+cor.test(grdiff$coefficient_bac_model1, grdiff$coefficient_bac_model2)
+cor.test(grdiff$coefficient_fun_model1, grdiff$coefficient_fun_model3)
+cor.test(grdiff$coefficient_bac_model1, sqrt(rowSums(centro2)))
+cor.test(grdiff$coefficient_fun_model1, sqrt(rowSums(centro2)))
+cor.test(grdiff$coefficient_bac_model1, grdiff$diffgr, method = "spearman")
+cor.test(grdiff$coefficient_fun_model1, grdiff$diffgr, method = "spearman")
+
+
+grdiff$species <- c(rep("EX", 5), rep("GA", 5), rep("HY", 4), rep("ENTO", 4), rep("SC", 3), rep("SO", 3))
+summary(aov(grdiff$coefficient_fun_model1 ~ grdiff$species))
+TukeyHSD(aov(grdiff$coefficient_fun_model1 ~ grdiff$species)) #ENTO-EX, ENTO-GA
+
+summary(aov(grdiff$coefficient_fun_model3 ~ grdiff$species))
+TukeyHSD(aov(grdiff$coefficient_fun_model3 ~ grdiff$species)) #ENTO-EX
+
+summary(aov(grdiff$coefficient_bac_model1 ~ grdiff$species))
+TukeyHSD(aov(grdiff$coefficient_bac_model1 ~ grdiff$species)) #ENTO-EX, ENTO-GA
+
+grdiff$posneg <- "neg"
+grdiff$posneg[which(grdiff$diffgr > 0)] <- "pos"
+
+```
+
+
+Check to GC-MS
+```{r}
+gcms <- read.delim("GC_data.txt", sep = "\t")
+gcms <- gcms[,1:83]
+g <- 7:83
+
+ptr.mean <- data.frame(matrix(data = NA, ncol = length(vocs), nrow = length(levels(as.factor(ptr.nc$name)))))
+rownames(ptr.mean) <- levels(as.factor(ptr.nc$name))
+names(ptr.mean) <- names(ptr.nc)[vocs]
+for(i in 1:length(vocs)){
+  ptr.mean[,i] <- aggregate(ptr.nc[,vocs[i]], list(ptr.nc$name), FUN = mean, na.action = na.rm)[,2]
+}
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Control")] <- "Terreno inoculato con solo batteri"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Sc1a+")] <- "SC1a+"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "So3ac")] <- "SO3ac"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex1a+")] <- "EX1a+"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex1ac")] <- "EX1ac"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex3a+")] <- "EX3a+"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex4ac")] <- "EX4ac"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex5ac")] <- "EX5ac"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex6a+")] <- "EX6a+"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex6ac")] <- "EX6ac"
+
+ptr.mean <- ptr.mean[which(rownames(ptr.mean) %in% gcms$Label),]
+gcms[1:50,] <- gcms[match(rownames(ptr.mean), gcms$Label[1:50]),]
+
+
+pdf("PTR_GC_Comparison.pdf")
+plot(ptr.mean$ms117.0914, gcms$comp_09[1:50], pch = 16, main = "ms117.0914=Isobutyl Acetate")
+plot(ptr.mean$ms87.0795, gcms$comp_29[1:50], pch = 16, main = "ms87.0795=3-Ethoxy-1-Propanol")
+plot(ptr.mean$ms48.0528, gcms$comp_06[1:50], pch = 16, main = "ms48.0528=Ethanol")
+plot(ptr.mean$ms58.0735, gcms$comp_16[1:50], pch = 16, main = "???ms58.0735=1-Butanol?ns!")
+plot(ptr.mean$ms105.0717, gcms$comp_73[1:50], pch = 16, xlim = c(0,5), main = "ms105.0717=Phenylethanol") #the control is NA, therefore the limit needs to be set
+plot(ptr.mean$ms74.0684, gcms$comp_03[1:50], pch = 16, main = "???ms74.0684=Butanal?ns!")
+plot(ptr.mean$ms75.0440, gcms$comp_46[1:50], pch = 16, main = "???ms75.0440=Propanoic Acid?ns!")
+plot(ptr.mean$ms90.0633, gcms$comp_02[1:50], pch = 16, main = "ms90.0633=Ethyl Acetate?")
+plot(ptr.mean$ms90.0633, gcms$comp_24[1:50], pch = 16, main = "ms90.0633=Acetoin?")
+plot(ptr.mean$ms60.0527, gcms$comp_01[1:50], pch = 16, main = "???ms60.0527=Acetone?ns!")
+plot(ptr.mean$ms61.0283, gcms$comp_40[1:50], pch = 16, main = "ms61.0283=Acetic Acid")
+dev.off()
+
+cor <- data.frame(matrix(data = NA, ncol = 9, nrow = 16))
+names(cor) <- c("masspeak", "ms_identification", "gc_compound", "gc_identification", "Pearson", "P_p-value", "Spearman", "S_p-value", "nobs")
+cor$masspeak <- c(rep("ms117.0914", 3), rep("ms87.0795", 2), "ms48.0528", "ms58.0735", "ms105.0717", "ms74.0684", "ms75.0440", rep("ms90.0633", 4), "ms60.0527", "ms61.0283")
+cor$gc_compound <- c("comp_09", "comp_10", "comp_12", "comp_04", "comp_29", "comp_06", "comp_16", "comp_73", "comp_03", "comp_46", "comp_02", "comp_24", "comp_49", "comp_55", "comp_01", "comp_40")
+cor$gc_identification <- c("Isobutyl Acetate", "Methyl Isovalerate", "Butanoic Acid Ethyl Ester", "3-Methyl Butanal", "3-Ethoxy-1-Propanol", "Ethanol", "1-Butanol", "Phenylethanol", "Butanal", "Propanoic Acid", "Ethyl Acetate", "Acetoin", "2-Methyl-Propanoic Acid", "Butanoic Acid", "Acetone", "Acetic Acid")
+cor$ms_identification <- c(rep("Isobutyl Acetate, Methyl Isovalerate, Butanoic Acid Ethyl Ester", 3), rep("3-Methyl Butanal, 3-Ethoxy-1-Propanol", 2), "Ethanol", "1-Butanol", "Phenylethanol", "Butanal", "Propanoic Acid", rep("Ethyl Acetate, Acetoin, 2-Methyl-Propanoic Acid, Butanoic Acid", 4), "Acetone", "Acetic Acid")
+
+
+ptrgc.ls <- vector("list", length = nrow(cor))
+names(ptrgc.ls) <- cor$gc_compound
+for(i in 1:nrow(cor)){
+  cor[i,]$nobs <- as.integer(summary(complete.cases(cbind(ptr.mean[,which(names(ptr.mean) == cor$masspeak[i])], gcms[1:50,which(names(gcms) == cor$gc_compound[i])])))[3])
+  ptrgc.ls[[i]] <- data.frame(ptr.mean[,which(names(ptr.mean) == cor$masspeak[i])], gcms[1:50,which(names(gcms) == cor$gc_compound[i])])
+  names(ptrgc.ls[[i]]) <- c("ptrtof", "gcms")
+  rownames(ptrgc.ls[[i]]) <- rownames(ptr.mean)
+  if(cor$nobs[i] > 4){
+    cor[i,]$Pearson <- cor.test(ptr.mean[,which(names(ptr.mean) == cor$masspeak[i])], gcms[1:50,which(names(gcms) == cor$gc_compound[i])])$estimate
+    cor[i,]$`P_p-value` <- cor.test(ptr.mean[,which(names(ptr.mean) == cor$masspeak[i])], gcms[1:50,which(names(gcms) == cor$gc_compound[i])])$p.value
+    cor[i,]$Spearman <- cor.test(ptr.mean[,which(names(ptr.mean) == cor$masspeak[i])], gcms[1:50,which(names(gcms) == cor$gc_compound[i])], method = "spearman")$estimate
+    cor[i,]$`S_p-value` <- cor.test(ptr.mean[,which(names(ptr.mean) == cor$masspeak[i])], gcms[1:50,which(names(gcms) == cor$gc_compound[i])], method = "spearman")$p.value
+  }
+}
+
+
+#Supplementary Figure
+pdf("PTR_GC_Supplementary_Corr.pdf")
+par(mfrow = c(3,2), mar = c(4,5,2,1))
+plot(ptr.mean$ms48.0528, gcms$comp_06[1:50], pch = 16, xlab = "ms48.0528 (Ethanol) [ppbV]", ylab = "Ethanol [peak area]", cex.lab = 1.3)
+plot(ptr.mean$ms61.0283, gcms$comp_40[1:50], pch = 16, xlab = "ms61.0283 (Acetic acid) [ppbV]", ylab = "Acetic acid [peak area]", cex.lab = 1.3)
+plot(ptr.mean$ms90.0633, gcms$comp_02[1:50], pch = 16, xlab = "ms90.0633 (Ethyl acetate?) [ppbV]", ylab = "Ethyl acetate [peak area]", cex.lab = 1.3)
+plot(ptr.mean$ms90.0633, gcms$comp_24[1:50], pch = 16, xlab = "ms90.0633 (Acetoin?) [ppbV]", ylab = "Acetoin [peak area]", cex.lab = 1.3)
+plot(ptr.mean$ms105.0717, gcms$comp_73[1:50], pch = 16, xlim = c(0,5), xlab = "ms105.0717 (Phenylethanol) [ppbV]", ylab = "Phenylethanol [peak area]", cex.lab = 1.3)
+dev.off()
+
+#WriteXLS(ptrgc.ls, ExcelFileName = "ptrgc.xls", row.names = T)
+####Iuliia commented that it might improve if the first measurement cycle is excluded. Trying.
+###Worth a try, but the result does not change.
+ptr.nc.red <- ptr.nc[-which(ptr.nc$cycle == "1"),]
+gcms <- read.delim("GC_data.txt", sep = "\t")
+gcms <- gcms[,1:83]
+g <- 7:83
+
+
+ptr.mean <- data.frame(matrix(data = NA, ncol = length(vocs), nrow = length(levels(as.factor(ptr.nc.red$name)))))
+rownames(ptr.mean) <- levels(as.factor(ptr.nc.red$name))
+names(ptr.mean) <- names(ptr.nc)[vocs]
+for(i in 1:length(vocs)){
+  ptr.mean[,i] <- aggregate(ptr.nc.red[,vocs[i]], list(ptr.nc.red$name), FUN = mean, na.action = na.rm)[,2]
+}
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Control")] <- "Terreno inoculato con solo batteri"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Sc1a+")] <- "SC1a+"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "So3ac")] <- "SO3ac"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex1a+")] <- "EX1a+"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex1ac")] <- "EX1ac"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex3a+")] <- "EX3a+"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex4ac")] <- "EX4ac"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex5ac")] <- "EX5ac"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex6a+")] <- "EX6a+"
+rownames(ptr.mean)[which(rownames(ptr.mean) == "Ex6ac")] <- "EX6ac"
+
+ptr.mean <- ptr.mean[which(rownames(ptr.mean) %in% gcms$Label),]
+gcms[1:50,] <- gcms[match(rownames(ptr.mean), gcms$Label[1:50]),]
+
+cor <- data.frame(matrix(data = NA, ncol = 9, nrow = 16))
+names(cor) <- c("masspeak", "ms_identification", "gc_compound", "gc_identification", "Pearson", "P_p-value", "Spearman", "S_p-value", "nobs")
+cor$masspeak <- c(rep("ms117.0914", 3), rep("ms87.0795", 2), "ms48.0528", "ms58.0735", "ms105.0717", "ms74.0684", "ms75.0440", rep("ms90.0633", 4), "ms60.0527", "ms61.0283")
+cor$gc_compound <- c("comp_09", "comp_10", "comp_12", "comp_04", "comp_29", "comp_06", "comp_16", "comp_73", "comp_03", "comp_46", "comp_02", "comp_24", "comp_49", "comp_55", "comp_01", "comp_40")
+cor$gc_identification <- c("Isobutyl Acetate", "Methyl Isovalerate", "Butanoic Acid Ethyl Ester", "3-Methyl Butanal", "3-Ethoxy-1-Propanol", "Ethanol", "1-Butanol", "Phenylethanol", "Butanal", "Propanoic Acid", "Ethyl Acetate", "Acetoin", "2-Methyl-Propanoic Acid", "Butanoic Acid", "Acetone", "Acetic Acid")
+cor$ms_identification <- c(rep("Isobutyl Acetate, Methyl Isovalerate, Butanoic Acid Ethyl Ester", 3), rep("3-Methyl Butanal, 3-Ethoxy-1-Propanol", 2), "Ethanol", "1-Butanol", "Phenylethanol", "Butanal", "Propanoic Acid", rep("Ethyl Acetate, Acetoin, 2-Methyl-Propanoic Acid, Butanoic Acid", 4), "Acetone", "Acetic Acid")
+
+for(i in 1:nrow(cor)){
+  cor[i,]$nobs <- as.integer(summary(complete.cases(cbind(ptr.mean[,which(names(ptr.mean) == cor$masspeak[i])], gcms[1:50,which(names(gcms) == cor$gc_compound[i])])))[3])
+  if(cor$nobs[i] > 4){
+    cor[i,]$Pearson <- cor.test(ptr.mean[,which(names(ptr.mean) == cor$masspeak[i])], gcms[1:50,which(names(gcms) == cor$gc_compound[i])])$estimate
+    cor[i,]$`P_p-value` <- cor.test(ptr.mean[,which(names(ptr.mean) == cor$masspeak[i])], gcms[1:50,which(names(gcms) == cor$gc_compound[i])])$p.value
+    cor[i,]$Spearman <- cor.test(ptr.mean[,which(names(ptr.mean) == cor$masspeak[i])], gcms[1:50,which(names(gcms) == cor$gc_compound[i])], method = "spearman")$estimate
+    cor[i,]$`S_p-value` <- cor.test(ptr.mean[,which(names(ptr.mean) == cor$masspeak[i])], gcms[1:50,which(names(gcms) == cor$gc_compound[i])], method = "spearman")$p.value
+  }
+}
+write.csv(cor, file = "ptr_gc_nott1.csv")
+
+
+#Iuliia also suggested using the sum of the mass peaks to correlate to GC as these compounds might not be discriminable in Ptr. Trying.
+cor.test((gcms$comp_09+gcms$comp_12)[1:50], ptr.mean$ms117.0914)
+
+#cor.test((gcms$comp_02+gcms$comp_24)[1:50], ptr.mean$ms90.0633)
+#cor.test((gcms$comp_02+gcms$comp_24+gcms$comp_55)[1:50], ptr.mean$ms90.0633)
+
+```

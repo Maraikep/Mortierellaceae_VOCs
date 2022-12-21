@@ -1,0 +1,1020 @@
+---
+title: "voc2_ptr"
+author: "Maraike Probst"
+date: "6 12 2021"
+output: html_document
+---
+This script supplementary consists of three script files that cover the data analysis performed for the results published in the manuscript. There is one script for each section: Growth: VOC2_publication_growth.Rmd, Volatiles: Voc2_ptrtof.Rmd, and Volatile models: Voc2_1_ptrtof_models_gcms.Rmd.
+The below code is meant to grasp the analysis of the data as published in the corresponding manuscript. The original code is longer; we hope that the below code is a helpful overview and enables the reproducibility of the manuscript. Naturally, more analysis on the data have been done and tested; the below code summarizes those analysis and results that were included into the manuscript.
+Please note that the name of the output file names do not indicate the number of the figure in the manuscript. Text explaining the chunk pinpoints to the figure. 
+Please note that the individual chunks are dependent on one another; they need to be run sequentially.
+
+
+packages
+```{r}
+library(reshape2)
+library(vegan)
+library(MASS)
+library(WriteXLS)
+library(biotools)
+library(ggplot2)
+library(gplots)
+library(sjstats)
+library(multcomp)
+library(heplots)
+library(dendextend)
+library(lme4)
+```
+
+The experiment contained 6 different species, containing 3-6 strains each (biological replicates). 
+Strains represent biological variation within species.
+Every strain was plated 3 times to account for biological variation within strains.
+Bacteria were plated in 3 replicates.
+All cultures were grown on pda medium.
+Every culture was measured in PTR-ToF in 4 measurement cycles.
+Pda replicates were included each measurement cycle.
+
+The majority of compound concentrations in PDA was independent of time. 
+
+
+For these, the entire set of pda values can be used for ttest comparison. (pda = data, individual sample data point = mu)
+For some mass peaks, the first time point was distinct from the other time points. (This might be due to differences between the microbial lab (Austria) and the PTR-ToF-MS lab (Italy).) For these mass peaks excluding the first time point of PDA resulted in the mass peak concentration in PDA being independent of time. Therefore, the first time point was excluded and the rest of the values was used for ttest comparison. (pda from t2-t4 = data, individual sample data point = mu)
+
+Some few mass peaks (7) followed a time trajectory. For them, the problem is, that three data points (only 2 at t4) are too few samples for a distribution to compare. For them, a linear model was calculated (compound ~ time; for both sample groups and pda). The coefficient*time (used as mean) and its SEx11 (this is SD used as distribution SD) were used to create a normal distribution from which 11 values were picked (corresponding to the size over all time points 1-4). Then the pda values from the time-dependent distribution were used as distribution to check the individual sample data points.
+
+saving data set as R-Object. Using this for all future analysis.
+```{r}
+ptr <- read.delim("PTR_data.txt", sep = ";")
+#names(ptr)
+n <- c()
+for(i in 1:ncol(ptr)){
+  n <- append(n, class(ptr[,i]), length(n))
+}
+#table(n)
+#names(ptr)[which(n == "integer")]
+
+ptr <- ptr[which(ptr$class_name != "Empty"),]
+
+for(i in c(5,6,9,12)){
+  ptr[,i] <- as.factor(ptr[,i])
+}
+ vocs <- 15:ncol(ptr)
+
+
+p.aov <- c()
+p.lm <- c()
+for(i in 1:length(vocs)){
+  p.aov <- append(p.aov, summary(aov(ptr[which(ptr$class_name == "PDA"),vocs[i]] ~ as.factor(ptr$cycle)[which(ptr$class_name == "PDA")]))[[1]][["Pr(>F)"]][1], length(p.aov))
+  p.lm <- append(p.lm, summary(lm(ptr[which(ptr$class_name == "PDA"),vocs[i]] ~ as.integer(ptr$cycle)[which(ptr$class_name == "PDA")]))$coefficients[2,4], length(p.lm))
+}
+summary(p.aov)
+summary(p.lm)
+names(ptr)[vocs[which(p.aov < 0.05)]]
+
+sel <- unique(c(names(ptr)[vocs[which(p.aov < 0.05)]], names(ptr)[vocs[which(p.lm < 0.05)]]))
+
+pdf("PTR_corr_check_pda_time.pdf")
+for(i in sel){
+  plot(ptr[which(ptr$class_name == "PDA"), which(names(ptr) == i)] ~ ptr$cycle[which(ptr$class_name == "PDA")], pch = 16, ylab = i)
+}
+dev.off()
+
+
+#Preparing PDA for individual sample concentration comparison to PDA (Does the individual measurement differ from the medium alone?)
+
+vocs.t2 <- c(4,5,73,80,97,98,99,108,103,63,112,71,3,78,43,114,66,10,84,106,110,113)
+
+ptr$ms44.0579[intersect(which(ptr$ms44.0579 > 1.5), which(ptr$class_name == "PDA"))] <- NA
+ptr$ms53.0390[intersect(which(ptr$ms53.0390 > 0.6), which(ptr$class_name == "PDA"))] <- NA
+ptr$ms72.0887[intersect(which(ptr$ms72.0887 > 0.15), which(ptr$class_name == "PDA"))] <- NA
+ptr$ms105.0717[intersect(which(ptr$ms105.0717 > 15), which(ptr$class_name == "PDA"))] <- NA
+
+vocs.time <- c(25,46,65,104,54,79,89)
+
+ptr.nc <- ptr
+for(i in vocs[-c(vocs.t2, vocs.time)]){
+  pda <- ptr[which(ptr$class_name == "PDA"),i]
+  for(j in which(ptr$class_name != "PDA")){
+    if(t.test(pda, mu = ptr[j,i])$p.value < 0.05){
+      ptr.nc[j,i] <- ptr[j,i] - mean(pda, na.rm = T)
+    }else{
+    ptr.nc[j,i] <- 0
+    }
+  }
+}
+
+for(i in vocs[vocs.t2]){
+  pda <- ptr[intersect(which(ptr$class_name == "PDA"), which(ptr$cycle != 1)),i]
+  for(j in which(ptr$class_name != "PDA")){
+    if(t.test(pda, mu = ptr[j,i])$p.value < 0.05){
+      ptr.nc[j,i] <- ptr[j,i] - mean(pda, na.rm = T)
+    }else{
+    ptr.nc[j,i] <- 0
+    }
+  }
+}
+
+#pdf("ptr_vocs.time_pdavssample.pdf")
+#for(i in vocs[vocs.time]){
+#  plot(ptr[which(ptr$class_name == "PDA"), i], ptr$cycle[which(ptr$class_name == "PDA")], pch = 16, ylab = i, col = "red", cex = 3, xlim = c(0,(max(ptr[which(ptr$class_name != "PDA"), i]+1))))
+#  points(ptr[which(ptr$class_name != "PDA"), i], jitter(ptr$cycle[which(ptr$class_name != "PDA")]), pch = 16, col = "purple")
+#}
+#dev.off()
+
+vocs.time.lm.ls <- vector("list", length = length(vocs.time))
+for(i in 1:length(vocs.time.lm.ls)){
+  vocs.time.lm.ls[[i]] <- lm(ptr[which(ptr$class_name == "PDA"), vocs[vocs.time[i]]] ~ ptr$cycle[which(ptr$class_name == "PDA")])
+  print(names(ptr)[vocs[vocs.time[i]]])
+  print(summary(vocs.time.lm.ls[[i]]))
+}
+
+for(i in 1:length(vocs.time.lm.ls)){
+  for(t in 1:4){
+    pda <- rnorm(11, mean = summary(vocs.time.lm.ls[[i]])[[4]][2,1]*t, sd = (summary(vocs.time.lm.ls[[i]])[[4]][2,2]*11))
+    for(j in intersect(which(ptr$class_name != "PDA"), which(ptr$cycle == t))){
+      if(t.test(pda, mu = ptr[j,vocs[vocs.time[i]]])$p.value < 0.05){
+        ptr.nc[j,vocs[vocs.time[i]]] <- ptr[j,vocs[vocs.time[i]]] - mean(pda, na.rm = T)
+      }else{
+        ptr.nc[j,vocs[vocs.time[i]]] <- 0
+      }
+    }
+  }
+}
+write.csv(ptr.nc, file = "ptr.nc.csv")
+
+#Checking if everything is as expected:
+t.test(ptr$ms28.0187[intersect(which(ptr$class_name == "PDA"), which(ptr$cycle != 1))], mu = ptr$ms28.0187[6])
+ptr.nc$ms28.0187[6]
+ptr$ms28.0187[6]
+t.test(ptr$ms28.0187[intersect(which(ptr$class_name == "PDA"), which(ptr$cycle != 1))], mu = ptr$ms28.0187[5])
+ptr.nc$ms28.0187[5]
+ptr$ms28.0187[5]
+
+t.test(ptr$ms85.1003[intersect(which(ptr$class_name == "PDA"), which(ptr$cycle != 1))], mu = ptr$ms85.1003[15])
+ptr.nc$ms85.1003[15]
+ptr$ms85.1003[15]
+t.test(ptr$ms85.1003[intersect(which(ptr$class_name == "PDA"), which(ptr$cycle != 1))], mu = ptr$ms85.1003[16])
+ptr.nc$ms85.1003[16]
+ptr$ms85.1003[16]
+
+t.test(ptr$ms26.0158[which(ptr$class_name == "PDA")], mu = ptr$ms26.0158[15])
+ptr.nc$ms26.0158[15]
+ptr$ms26.0158[15]
+
+t.test(ptr$ms26.0158[which(ptr$class_name == "PDA")], mu = ptr$ms26.0158[618])
+ptr.nc$ms26.0158[618]
+ptr$ms26.0158[618]
+
+#pdf("ptr_vocs.time_pdavssample_postcorrection.pdf")
+#for(i in vocs[vocs.time]){
+#  plot(ptr[which(ptr$class_name == "PDA"), i], ptr$cycle[which(ptr$class_name == "PDA")], pch = 16, ylab = i, col = "red", cex = 3, xlim = c(0,(max(ptr[which(ptr$class_name != "PDA"), i]+1))))
+#  points(ptr[which(ptr$class_name != "PDA"), i], jitter(ptr$cycle[which(ptr$class_name != "PDA")]), pch = 16, col = "purple")
+#}
+#dev.off()
+
+summary(ptr$ms72.0526)
+summary(ptr.nc$ms72.0526)
+summary(ptr$ms127.0402)
+summary(ptr.nc$ms127.0402)
+
+
+#Checking of all sample groups concentrations differ significantly from zero.
+zero.vocs.df <- data.frame(matrix(data = NA, ncol = length(vocs), nrow = length(levels(ptr.nc$strain_trt))))
+names(zero.vocs.df) <- names(ptr.nc)[vocs]
+rownames(zero.vocs.df) <- levels(ptr.nc$strain_trt)
+for(i in 1:ncol(zero.vocs.df)){
+  for(j in 1:nrow(zero.vocs.df)){
+    zero.vocs.df[j,i] <- t.test(ptr.nc[which(ptr.nc$strain_trt == levels(ptr.nc$strain_trt)[j]),vocs[i]], mu = 0)$p.value
+  }
+}
+write.csv(zero.vocs.df, file = "PTR_zero.vocs.df.csv")
+
+min.val <- c()
+for(i in 1:ncol(zero.vocs.df)){
+  min.val <- append(min.val, min(zero.vocs.df[,i], na.rm = T), length(min.val))
+}
+summary(min.val)
+names(zero.vocs.df)[which(min.val > 0.05)] # this is peak ms75.9442, which was comparable to PDA in all sample groups. This ms will be removed.
+
+#Checking also if there are peaks that can be removed, because they are zero within all sample groups (strains and species)
+ptr.nc$species_trt <- as.factor(paste(ptr.nc$class_name, ptr.nc$trt, sep = "_"))
+ptr.nc$strain_trt <- as.factor(paste(ptr.nc$type, ptr.nc$trt, sep = "_"))
+
+mean.ptr.vocs.df <- data.frame(matrix(data = NA, ncol = length(vocs), nrow = length(levels(ptr.nc$strain_trt))))
+rownames(mean.ptr.vocs.df) <- levels(ptr.nc$strain_trt)
+names(mean.ptr.vocs.df) <- names(ptr)[vocs]
+for(i in 1:length(vocs)){
+  mean.ptr.vocs.df[,i] <- aggregate(ptr.nc[,vocs[i]], list(ptr.nc$strain_trt), FUN = median)[,2]
+}
+write.csv(mean.ptr.vocs.df, file = "PTR_use_pda_straintreatment_strain.csv")
+
+mean.ptr.vocs.df <- data.frame(matrix(data = NA, ncol = length(vocs), nrow = length(levels(ptr.nc$species_trt))))
+rownames(mean.ptr.vocs.df) <- levels(ptr.nc$species_trt)
+names(mean.ptr.vocs.df) <- names(ptr)[vocs]
+for(i in 1:length(vocs)){
+  mean.ptr.vocs.df[,i] <- aggregate(ptr.nc[,vocs[i]], list(ptr.nc$species_trt), FUN = median)[,2]
+}
+write.csv(mean.ptr.vocs.df, file = "PTR_use_pda_straintreatment_species.csv")
+
+
+which(colSums(mean.ptr.vocs.df[-10,], na.rm = T) == 0)
+# for species: ms75.9442 ms126.9046 ms175.0964 ms179.1240 
+# for strains, there are no zero peaks.
+#Keeping all.
+
+ptr.nc <- ptr.nc[,-which(names(ptr.nc) == "ms75.9442")]
+save(ptr.nc, file = "ptr.nc.RData")
+
+```
+
+
+loading data
+```{r}
+rm(list = ls())
+load("ptr.nc.RData")
+vocs <- c(15:127)
+
+
+ptr <- read.delim("PTR_data.txt", sep = ";")
+ptr <- ptr[which(ptr$class_name != "Empty"),]
+ptr <- ptr[,-which(names(ptr) == "ms75.9442")]
+for(i in c(5,6,9,12)){
+  ptr[,i] <- as.factor(ptr[,i])
+}
+
+ptr$type <- paste(ptr$class_name, "_", ptr$type, sep = "")
+ptr$species_trt <- as.factor(paste(ptr$class_name, ptr$trt, sep = "_"))
+ptr$strain_trt <- as.factor(paste(ptr$type, ptr$trt, sep = "_"))
+
+
+ptr.nc <- ptr.nc[which(ptr.nc$class_name != "PDA"),]
+ptr.nc$type <- paste(ptr.nc$class_name, ptr.nc$type, sep = "_")
+for(i in c(4,6,7,8,10,11)){
+  ptr.nc[,i] <- as.factor(as.character(ptr.nc[,i]))
+}
+ptr.nc$strain_trt <- factor(paste(ptr.nc$type, ptr.nc$trt, sep = "_"), levels = levels(ptr$strain_trt), ordered = T)
+ptr.nc$species_trt <- factor(paste(ptr.nc$class_name, ptr.nc$trt, sep = "_"), levels = levels(ptr$species_trt), ordered = T)
+
+ptr.nc$strain_trt <- as.factor(as.character(ptr.nc$strain_trt))
+
+```
+
+
+
+#Concentration of compounds across the entire dataset
+This is the comparison to PDA. 
+Which and how many compounds are produced by PDA?
+```{r}
+voc.ls <- vector("list", length = length(levels(ptr$species_trt)))
+names(voc.ls) <- levels(ptr$species_trt)
+for(i in 1:length(voc.ls)){
+  voc.ls[[i]] <- aggregate(ptr[,vocs[1]], list(ptr$species_trt), summary)[i,-1]
+  for(j in 2:length(vocs)){
+    voc.ls[[i]] <- rbind(voc.ls[[i]], aggregate(ptr[,vocs[j]], list(ptr$species_trt), summary)[i,-1])
+  }
+  rownames(voc.ls[[i]]) <- names(ptr)[vocs]
+}
+
+mean.vocs <- data.frame(voc.ls$Bacteria_no[,4])
+for(i in 2:length(voc.ls)){
+  mean.vocs <- cbind(mean.vocs, voc.ls[[i]][,4])
+}
+names(mean.vocs) <- names(voc.ls)
+
+png("PTR_PDA_Hist.png")
+par(mfrow = c(2,2), mar = c(4,5,1,1))
+hist(voc.ls$PDA_no[,3], xlab = "", main = "", cex.lab = 1.5, cex.axis = 1.3)
+hist(voc.ls$PDA_no[,3][which(voc.ls$PDA_no[,3] < 1)], breaks = 50, xlab = "", ylab = "", main = "", cex.lab = 1.5, cex.axis = 1.3)
+hist(voc.ls$PDA_no[,3][which(voc.ls$PDA_no[,3] < 0.5)], breaks = 50, xlab = "Concentration [ppbV]", main = "", cex.lab = 1.5, cex.axis = 1.3)
+hist(voc.ls$PDA_no[,3][which(voc.ls$PDA_no[,3] < 0.2)], breaks = 50, xlab = "Concentration [ppbV]", main = "", ylab = "", cex.lab = 1.5, cex.axis = 1.3)
+dev.off()
+
+mean.vocs <- data.frame(voc.ls$Bacteria_no[,4])
+for(i in 2:length(voc.ls)){
+  mean.vocs <- cbind(mean.vocs, voc.ls[[i]][,4])
+}
+names(mean.vocs) <- names(voc.ls)
+mean.vocs <- melt(mean.vocs[,c(1,3,5,7,9,10,12,14)])
+
+png("PTR_PDA_density_all.png")
+ggplot(mean.vocs, aes(x=value, fill=variable, color=variable)) + geom_density( position="identity", alpha=0.1, aes(color=variable))
+dev.off()
+png("PTR_PDA_density_1.png")
+ggplot(mean.vocs[which(mean.vocs$value < 1),], aes(x=value, fill=variable, color=variable)) + geom_density( position="identity", alpha=0.1, aes(color=variable))
+dev.off()
+png("PTR_PDA_density_0.5.png")
+ggplot(mean.vocs[which(mean.vocs$value < 0.5),], aes(x=value, fill=variable, color=variable)) + geom_density( position="identity", alpha=0.1, aes(color=variable))
+dev.off()
+png("PTR_PDA_density_0.2.png")
+ggplot(mean.vocs[which(mean.vocs$value < 0.2),], aes(x=value, fill=variable, color=variable)) + geom_density( position="identity", alpha=0.1, aes(color=variable))
+dev.off()
+png("PTR_PDA_density_5.png")
+ggplot(mean.vocs[which(mean.vocs$value < 5),], aes(x=value, fill=variable, color=variable)) + geom_density( position="identity", alpha=0.1, aes(color=variable))
+dev.off()
+png("PTR_PDA_density_10.png")
+ggplot(mean.vocs[which(mean.vocs$value < 10),], aes(x=value, fill=variable, color=variable)) + geom_density( position="identity", alpha=0.1, aes(color=variable))
+dev.off()
+
+
+
+###Creating the heatmap - Figure 3
+mean.vocs <- data.frame(voc.ls$Bacteria_no[,4])
+for(i in 2:length(voc.ls)){
+  mean.vocs <- cbind(mean.vocs, voc.ls[[i]][,4])
+}
+names(mean.vocs) <- names(voc.ls)
+
+for(i in 1:ncol(mean.vocs)){
+  for(j in 1:nrow(mean.vocs)){
+    if(mean.vocs[j,i] < 0.2){
+      mean.vocs[j,i] <- 0
+    }else if(mean.vocs[j,i] >= 0.2 && mean.vocs[j,i] < 0.5){
+      mean.vocs[j,i] <- 1
+    }else if(mean.vocs[j,i] >= 0.5 && mean.vocs[j,i] < 1){
+      mean.vocs[j,i] <- 2
+    }else if(mean.vocs[j,i] >= 1 && mean.vocs[j,i] < 5){
+      mean.vocs[j,i] <- 3
+    }else if(mean.vocs[j,i] >= 5 && mean.vocs[j,i] < 10){
+      mean.vocs[j,i] <- 4
+    }else if(mean.vocs[j,i] >= 10 && mean.vocs[j,i] < 20){
+      mean.vocs[j,i] <- 5
+    }else if(mean.vocs[j,i] >= 20 && mean.vocs[j,i] < 50){
+      mean.vocs[j,i] <- 6
+    }else if(mean.vocs[j,i] >= 50){
+      mean.vocs[j,i] <- 7
+    }
+  }
+}
+mean.vocs <- mean.vocs[order(mean.vocs$PDA_no, decreasing = T),]
+
+heatplot <-  heatmap.2(as.matrix(mean.vocs[rowSums(mean.vocs) > 0, c(1,3,5,7,9,10,12,14)]), scale = "none", col = c("White", "lightblue", "#fee0d2", "#fcbba1", "#fb8072", "#ef3b2c", "#cb181d", "#a50f15", "#67000d"), trace = "none", hclustfun = function(x) hclust(x, method="ward.D"), Rowv = NA, margins = c(12,8))
+
+tiff("PTR_Heatmap_PDA_Species.tiff", width = 400, height = 1000)
+heatmap.2(as.matrix(mean.vocs[rowSums(mean.vocs) > 0, c(10,1,3,5,7,12,14,9)]), scale = "none", col = c("white", "#fcbba1", "#fc9272", "#fb8072", "#ef3b2c", "#cb181d", "#a50f15", "#67000d"), trace = "none", Colv = NA, Rowv = NA, margins = c(15,8), labCol = as.expression(c("PDA", lapply(c("P. helmanticensis", "L. exigua", "L. gamsii", "L. hyalina", "L. sclerotiella", "L. solitaria", "E. galaxia"), function(a) bquote(italic(.(a)))))), cexCol = 2)
+dev.off()
+
+tiff("PTR_heatmap_legend_trt.tiff")
+plot.new()
+legend("topright", legend = c("P. helmanticensis", "Fungal pure culture", "Co-culture"), fill = c("black", "#fdb462", "#ffffb3"), cex = 2, bty = "n")
+dev.off()
+
+###Creating the barchart - Figure 3
+ptr.dependency.df <- data.frame(matrix(data = NA, ncol = 8, nrow = length(vocs)))
+names(ptr.dependency.df) <- c("species.p", "species.size", "strain.p", "strain.size", "trt.p", "trt.size", "time.p", "time.size")
+rownames(ptr.dependency.df) <- names(ptr.nc)[vocs]
+
+ptr.nobac <- ptr.nc[which(ptr.nc$class_name != "Bacteria"),]
+ptr.nobac$class_name <- as.factor(as.character(ptr.nobac$class_name))
+ptr.nobac$type <- as.factor(as.character(ptr.nobac$type))
+ptr.nobac$trt <- as.factor(as.character(ptr.nobac$trt))
+for(i in 1:length(vocs)){
+  m <- summary(aov(ptr.nobac[,vocs[i]] ~ ptr.nobac$class_name + ptr.nobac$class_name:ptr.nobac$type + ptr.nobac$trt + ptr.nobac$cycle + ptr.nobac$class_name*ptr.nobac$trt + ptr.nobac$class_name:ptr.nobac$type*ptr.nobac$trt))
+  ptr.dependency.df[i,]$species.p <- m[[1]][1,5]
+  ptr.dependency.df[i,]$strain.p <- m[[1]][4,5]
+  ptr.dependency.df[i,]$trt.p <- m[[1]][2,5]
+  ptr.dependency.df[i,]$time.p <- m[[1]][3,5]
+  s <- sum(m[[1]][,3])
+  ptr.dependency.df[i,]$species.size <- m[[1]][1,3]/s
+  ptr.dependency.df[i,]$strain.size <- m[[1]][4,3]/s
+  ptr.dependency.df[i,]$trt.size <- m[[1]][2,3]/s
+  ptr.dependency.df[i,]$time.size <- m[[1]][3,3]/s
+}
+#write.csv(ptr.dependency.df, file = "PTR_AOV_vocs_all_effects_nointeractions.csv")
+
+ptr.seff <- ptr.dependency.df
+for(i in c(2,4,6,8)){
+  #print(i)
+  for(j in 1:nrow(ptr.dependency.df)){
+    if(ptr.seff[j,i-1] > 0.05){
+      #print(ptr.seff[j,i-1])
+      ptr.seff[j,i] <- 0
+      #print(ptr.seff[j,i])
+    }
+  }
+}
+
+ptr.seff <- ptr.seff[match(rownames(mean.vocs)[rowSums(mean.vocs) > 0], rownames(ptr.seff)),c(2,4,6,8)]
+#write.csv(ptr.seff, file = "PTR_ptr_seff.csv")
+
+tiff("PTR_Barchart_sizeeffect_vocs.tiff", width = 1500, height = 300)
+par(mar = c(3,5,2,2))
+barplot(t(ptr.seff[rev(heatplot$rowInd),]), col = c("#bebada", "#fccde5", "#ffffb3", "#8dd3c7"), ylim = c(0,1), las = 3, cex.lab = 2, ylab = "Size effect", cex.axis = 2, space = 0)
+dev.off()
+
+tiff("PTR_barchart_legend_sizeffects_vocs.tiff")
+plot.new()
+legend("topright", legend = c("Species", "Strain", "Cultivation mode", "Time"), fill = c("#bebada", "#fccde5", "#ffffb3", "#8dd3c7"), cex = 2, bty = "n")
+dev.off()
+
+
+png("PTR_Boxplot_time_dependent_vocs.png", width = 200)
+boxplot(ptr.seff$time.size, ylab = "Size effect measurement cycle", xlab = "", cex.axis = 1.5, cex.lab = 1.5)
+dev.off()
+
+
+prod <- rownames(mean.vocs)[which(mean.vocs$PDA_no == 0)]
+cons <- rownames(mean.vocs)[which(mean.vocs$PDA_no != 0)]
+```
+
+
+#Producers and consumers
+#Fold-changes compared to PDA
+
+1) Predicting probability of produced and consumed compounds - binomial model
+```{r}
+#Which compounds are consumed - produced compared to pda? Creating a matrix of t-values. If the compound in the strain in ptr.nc (which is corrected for pda) is higher/lower compared to zero, there is production/consumption of the compound.
+ptr.pda <- ptr[which(ptr$class_name == "PDA"),]
+ptr.nonpda <- ptr[which(ptr$class_name != "PDA"),]
+
+thres <- c(0, 0.05, 0.2, 0.5, 1, 5, 10, 20, 50)
+pda.prod.ls <- vector("list", length = length(thres))
+names(pda.prod.ls) <- paste("thres_", thres, sep = "")
+for(i in 1:(length(pda.prod.ls)-1)){
+  #pda.prod.ls[[i]] <- c()
+  rv <- c()
+  for(j in 1:length(vocs)){
+    if(t.test(ptr.pda[,vocs[j]], mu = thres[i], alternative = "greater")$p.value < 0.05){
+      #pda.prod.ls[[i]] <- append(pda.prod.ls[[i]], names(ptr.pda)[vocs[j]])
+      rv <- append(rv, names(ptr.pda)[vocs[j]], length(rv))
+    }
+  }
+  pda.prod.ls[[i]] <- rv
+}
+
+
+freq.thres.ls <- vector("list", length = nrow(ptr.nc))
+names(freq.thres.ls) <- paste(1:nrow(ptr.nc), ptr.nc$strain_trt, sep = "|")
+freq.thres.df.ls <- vector("list", length = length(thres))
+names(freq.thres.df.ls) <- paste("thres_", thres, sep = "")
+for(j in 1:length(thres)){
+  freq.thres.df.ls[[j]] <- data.frame(matrix(data = NA, ncol = 3, nrow = nrow(ptr.nc)))
+  names(freq.thres.df.ls[[j]]) <- c("raw", "prod", "cons")
+  rownames(freq.thres.df.ls[[j]]) <- paste(1:nrow(ptr.nc), ptr.nc$strain_trt, sep = "|")
+}
+
+for(i in 1:nrow(ptr.nc)){
+  rdf.ptrnc <- as.numeric(ptr.nc[i,vocs])
+  rdf.ptr <- as.numeric(ptr.nonpda[i,vocs])
+  freq.thres.ls[[i]] <- vector("list", length = length(thres))
+  names(freq.thres.ls[[i]]) <- paste("thres_", thres, sep = "")
+  for(j in 1:length(thres)){
+    raw <- names(ptr)[vocs][which(rdf.ptr > thres[j])]
+    prod <- names(ptr)[vocs][which(rdf.ptrnc > 0)]
+    prod <- prod[which(prod %in% raw)]
+    
+    cons <- names(ptr)[vocs][which(rdf.ptrnc < 0)]
+    cons <- cons[which(cons %in% pda.prod.ls[[j]])]
+    
+    freq.thres.ls[[i]][[j]] <- list("raw" = raw, "prod" = prod, "cons" = cons)
+    
+    freq.thres.df.ls[[j]][i,1] <- length(raw)
+    freq.thres.df.ls[[j]][i,2] <- length(prod)
+    freq.thres.df.ls[[j]][i,3] <- length(cons)
+  }
+}
+
+for(i in 1:length(freq.thres.df.ls)){
+  freq.thres.df.ls[[i]] <- data.frame(ptr.nc[,-vocs], freq.thres.df.ls[[i]])
+  freq.thres.df.ls[[i]] <- freq.thres.df.ls[[i]][which(freq.thres.df.ls[[i]]$trt != "+"),]
+}
+
+mod.species.ls <- vector("list", length = length(thres))
+names(mod.species.ls) <- names(freq.thres.df.ls)
+mod.strains.ls <- vector("list", length = length(thres))
+names(mod.strains.ls) <- names(freq.thres.df.ls)
+for(i in 1:8){
+  mod.species.ls[[i]] <- glm(cbind(cons, prod) ~ class_name, data = freq.thres.df.ls[[i]], family = binomial)
+  mod.strains.ls[[i]] <- glm(cbind(cons, prod) ~ type, data = freq.thres.df.ls[[i]], family = binomial)
+  freq.thres.df.ls[[i]]$pred_species <- predict(mod.species.ls[[i]], type = "response", se.fit = T)$fit
+  freq.thres.df.ls[[i]]$fit_species <- predict(mod.species.ls[[i]], type = "response", se.fit = T)$se.fit
+  
+  freq.thres.df.ls[[i]]$pred_strain <- predict(mod.strains.ls[[i]], type = "response", se.fit = T)$fit
+  freq.thres.df.ls[[i]]$fit_strain <- predict(mod.strains.ls[[i]], type = "response", se.fit = T)$se.fit
+}
+
+
+make.italic <- function(x) as.expression(lapply(x, function(y) bquote(italic(.(y)))))
+
+
+plot.ls <- freq.thres.df.ls
+for(i in 1:8){
+  plot.ls[[i]] <- plot.ls[[i]][!duplicated(plot.ls[[i]]$pred_species),]
+  plot.ls[[i]]$class_name <- c("E. galaxiae", "L. hyalina", "L. sclerotiella", "L. gamsii", "L. solitaria", "L. exigua", "P. helmanticensis")
+  plot.ls[[i]]$class_name <- factor(plot.ls[[i]]$class_name, levels = c("P. helmanticensis", "L. exigua", "L. gamsii", "L. hyalina", "L. sclerotiella", "L. solitaria", "E. galaxiae"), ordered = T)
+  plot.ls[[i]] <- plot.ls[[i]][order(plot.ls[[i]]$class_name),]
+}
+
+png("PTR_GLM_Bino_thresholds_predictions_cons_species.png", width = 850, height = 650)
+par(mfrow = c(2,4))
+for(i in 1:8){
+  if(i %in% c(2,3,4)){
+    par(mar = c(2,2,2,2))
+    plot(pred_species ~ class_name, data = plot.ls[[i]], xlab = "", ylim = c(0,1), las = 3, cex.lab = 1.7, cex.axis = 1.7, ylab = "", names = rep("", 7))
+    arrows(x0=c(1:7), y0=plot.ls[[i]]$pred_species-plot.ls[[i]]$fit_species, x1=c(1:7), y1=plot.ls[[i]]$pred_species+plot.ls[[i]]$fit_species, code=3, angle=90, length=0.1)
+  }
+  if(i == 1){
+    par(mar = c(2,5,2,2))
+    plot(pred_species ~ class_name, data = plot.ls[[i]], xlab = "", ylim = c(0,1), las = 3, cex.lab = 1.7, cex.axis = 1.7, ylab = "Predicted p(consumption)", names = rep("", 7))
+    arrows(x0=c(1:7), y0=plot.ls[[i]]$pred_species-plot.ls[[i]]$fit_species, x1=c(1:7), y1=plot.ls[[i]]$pred_species+plot.ls[[i]]$fit_species, code=3, angle=90, length=0.1)
+  }
+  if(i == 5){
+    par(mar = c(12,5,2,2))
+    plot(pred_species ~ class_name, data = plot.ls[[i]], xlab = "", ylim = c(0,1), las = 3, cex.lab = 1.7, cex.axis = 1.7, ylab = "Predicted p(consumption)", names = make.italic(levels(plot.ls[[i]]$class_name)))
+    arrows(x0=c(1:7), y0=plot.ls[[i]]$pred_species-plot.ls[[i]]$fit_species, x1=c(1:7), y1=plot.ls[[i]]$pred_species+plot.ls[[i]]$fit_species, code=3, angle=90, length=0.1)
+  }
+  if(i %in% c(6,7,8)){
+    par(mar = c(12,2,2,2))
+    plot(pred_species ~ class_name, data = plot.ls[[i]], xlab = "", ylim = c(0,1), las = 3, cex.lab = 1.7, cex.axis = 1.7, ylab = "", names = make.italic(levels(plot.ls[[i]]$class_name)))
+    arrows(x0=c(1:7), y0=plot.ls[[i]]$pred_species-plot.ls[[i]]$fit_species, x1=c(1:7), y1=plot.ls[[i]]$pred_species+plot.ls[[i]]$fit_species, code=3, angle=90, length=0.1)
+  }
+}
+
+
+plot.ls <- freq.thres.df.ls
+for(i in 1:8){
+  plot.ls[[i]] <- plot.ls[[i]][!duplicated(plot.ls[[i]]$type),]
+  plot.ls[[i]]$type <- c("EG_M22", "HY_Ks1_7", "SC_HFSF85", "GA_Pr2s1", "SO_OAS5", "EX_Ks2_4", "EG_Pfs28", "HY_Ks2_11", "SC_HFSF83", "GA_M10", "SO_OAS4", "EG_Pr1s18", "EX_HFSF103", "HY_Ks2_12", "SC_HFSF81", "GA_Pats3_1", "SO_OAS3", "EX_HFSF26", "EG_Prw1_1", "GA_Ks2_13", "EX_Pr2s22", "HY_Patw2_7", "EG_M1", "GA_M42", "EX_Pats4_2", "P. helmanticensis")
+  plot.ls[[i]]$type <- factor(plot.ls[[i]]$type, levels = c("P. helmanticensis", "EX_Ks2_4", "EX_HFSF103", "EX_HFSF26", "EX_Pr2s22", "EX_Pats4_2", "GA_Pr2s1", "GA_M10", "GA_Pats3_1", "GA_Ks2_13", "GA_M42", "HY_Ks1_7", "HY_Ks2_11", "HY_Ks2_12", "HY_Patw2_7", "SC_HFSF85", "SC_HFSF83", "SC_HFSF81", "SO_OAS5", "SO_OAS4", "SO_OAS3", "EG_M22", "EG_Pfs28", "EG_Pr1s18", "EG_Prw1_1", "EG_M1"), ordered = T)
+  plot.ls[[i]] <- plot.ls[[i]][order(plot.ls[[i]]$type),]
+}
+
+png("PTR_GLM_Bino_thresholds_predictions_cons_strain.png", height = 1500, width = 950)
+par(mfrow = c(4,2))
+for(i in 1:8){
+  if(i %in% c(1,3,5)){
+    par(mar = c(2,6,2,2))
+    plot(pred_strain ~ type, data = plot.ls[[i]], xlab = "", ylim = c(0,1), las = 3, cex.lab = 3, cex.axis = 2, ylab = "Predicted p(consumption)", names = rep("", 26))
+  arrows(x0=c(1:26), y0=plot.ls[[i]]$pred_strain-plot.ls[[i]]$fit_strain, x1=c(1:26), y1=plot.ls[[i]]$pred_strain+plot.ls[[i]]$fit_strain, code=3, angle=90, length=0.1)
+  }
+  if(i %in% c(2,4,6)){
+    par(mar = c(2,6,2,2))
+    plot(pred_strain ~ type, data = plot.ls[[i]], xlab = "", ylim = c(0,1), las = 3, cex.lab = 3, cex.axis = 2, ylab = "", names = rep("", 26))
+  arrows(x0=c(1:26), y0=plot.ls[[i]]$pred_strain-plot.ls[[i]]$fit_strain, x1=c(1:26), y1=plot.ls[[i]]$pred_strain+plot.ls[[i]]$fit_strain, code=3, angle=90, length=0.1)
+  }
+  if(i == 7){
+    par(mar = c(15,6,2,2))
+    plot(pred_strain ~ type, data = plot.ls[[i]], xlab = "", ylim = c(0,1), las = 3, cex.lab = 3, cex.axis = 2, ylab = "Predicted p(consumption)", names = make.italic(levels(plot.ls[[i]]$type)))
+  arrows(x0=c(1:26), y0=plot.ls[[i]]$pred_strain-plot.ls[[i]]$fit_strain, x1=c(1:26), y1=plot.ls[[i]]$pred_strain+plot.ls[[i]]$fit_strain, code=3, angle=90, length=0.1)
+  }
+  if(i == 8){
+    par(mar = c(15,6,2,2))
+    plot(pred_strain ~ type, data = plot.ls[[i]], xlab = "", ylim = c(0,1), las = 3, cex.lab = 3, cex.axis = 2, ylab = "", names = make.italic(levels(plot.ls[[i]]$type)))
+  arrows(x0=c(1:26), y0=plot.ls[[i]]$pred_strain-plot.ls[[i]]$fit_strain, x1=c(1:26), y1=plot.ls[[i]]$pred_strain+plot.ls[[i]]$fit_strain, code=3, angle=90, length=0.1)
+  }
+}
+
+
+model.overview <- data.frame(matrix(data = NA, ncol = 3, nrow = length(mod.species.ls)*2))
+names(model.overview) <- c("Null deviance", "Model deviance", "AIC")
+rownames(model.overview) <- c(paste("Species", names(mod.species.ls), sep = "_"), paste("Strains", names(mod.species.ls), sep = "_"))
+for(i in 1:8){
+  model.overview$`Null deviance`[i] <- mod.species.ls[[i]]$null.deviance
+  model.overview$`Model deviance`[i] <- mod.species.ls[[i]]$deviance
+  model.overview$AIC[i] <- mod.species.ls[[i]]$aic
+  
+  model.overview$`Null deviance`[i+9] <- mod.strains.ls[[i]]$null.deviance
+  model.overview$`Model deviance`[i+9] <- mod.strains.ls[[i]]$deviance
+  model.overview$AIC[i+9] <- mod.strains.ls[[i]]$aic
+}
+
+model.overview$Pseudo_R <- (model.overview$`Null deviance`-model.overview$`Model deviance`)/model.overview$`Null deviance`
+model.overview$StatDF <- model.overview$`Model deviance`/nrow(ptr.nc)
+write.csv(model.overview, file = "PTR_modeloverview_binomial.csv")
+
+```
+
+
+2) Heatmap Figure 4 - produced and consumed compounds
+```{r}
+#Producing the heatmap - Figure 4
+####Investigating fold-changes - change of concentration in reference to pda.
+#for visualisation, the same threshold of 0.2 was applied - as justified by the histogramm/distribution of the concentrations in pda signal. 
+voc.ls <- vector("list", length = length(levels(ptr$strain_trt)))
+names(voc.ls) <- levels(ptr$strain_trt)
+for(i in 1:length(voc.ls)){
+  voc.ls[[i]] <- aggregate(ptr[,vocs[1]], list(ptr$strain_trt), summary)[i,-1]
+  for(j in 2:length(vocs)){
+    voc.ls[[i]] <- rbind(voc.ls[[i]], aggregate(ptr[,vocs[j]], list(ptr$strain_trt), summary)[i,-1])
+  }
+  rownames(voc.ls[[i]]) <- names(ptr)[vocs]
+}
+
+mean.vocs <- data.frame(voc.ls$Bacteria_Bacteria_no[,4])
+for(i in 2:length(voc.ls)){
+  mean.vocs <- cbind(mean.vocs, voc.ls[[i]][,4])
+}
+names(mean.vocs) <- names(voc.ls)
+
+mean.topda.vocs <- mean.vocs
+mean.topda.vocs[mean.vocs < 0.05] <- 0
+
+for(i in 1:ncol(mean.topda.vocs)){
+  mean.topda.vocs[,i] <- mean.topda.vocs[,i]/voc.ls$PDA_PDA_no[,4]
+}
+names(mean.topda.vocs) <- names(voc.ls)
+
+mean.topda.vocs <- mean.topda.vocs[,-42]
+mean.topda.vocs.bi <- mean.topda.vocs
+
+trt.color <- rep("black", ncol(mean.topda.vocs.bi))
+trt.color[seq(3,ncol(mean.topda.vocs.bi), by = 2)] <- "#ffffb3" #pure
+trt.color[seq(2,ncol(mean.topda.vocs.bi), by = 2)] <- "#fdb462" #coculture
+
+#Some vocs end up being zero by definition if a change in at least 2-fold (higher or lower) compared to pda is required for production. Testing which vocs are significantly different from pda. Using a 5 color code then (produced higher than 2 fold, produced higher than pda, comparable to pda, consumed lower than pda, consumed more than 2fold compared to pda)
+###Strains
+#Within strains, which compound concentrations differ significantly from zero?
+zero.vocs.strains <- data.frame(matrix(data = NA, ncol = length(vocs), nrow = length(levels(ptr.nc$strain_trt))))
+names(zero.vocs.strains) <- names(ptr.nc)[vocs]
+rownames(zero.vocs.strains) <- levels(ptr.nc$strain_trt)
+for(i in 1:ncol(zero.vocs.strains)){
+  for(j in 1:nrow(zero.vocs.strains)){
+    zero.vocs.strains[j,i] <- t.test(ptr.nc[which(ptr.nc$strain_trt == levels(ptr.nc$strain_trt)[j]),vocs[i]], mu = 0)$p.value
+  }
+}
+zero.vocs.strains <- data.frame(t(zero.vocs.strains))
+zero.vocs.strains[is.na(zero.vocs.strains)] <- 1
+#write.csv(zero.vocs.strains, file = "PTR_zero.vocs.strains.csv")
+
+for(i in 1:ncol(mean.topda.vocs.bi)){
+  for(j in 1:nrow(mean.topda.vocs.bi)){
+    if(mean.topda.vocs[j,i] >= 2){
+      mean.topda.vocs.bi[j,i] <- 1
+    }else if(mean.topda.vocs[j,i] < 2 && mean.topda.vocs[j,i] > 0.5){
+      if(zero.vocs.strains[j,i] < 0.05){
+        if(mean.topda.vocs[j,i] > 1){
+          mean.topda.vocs.bi[j,i] <- 0.5
+        }else{
+          mean.topda.vocs.bi[j,i] <- -0.5 
+        }
+      }else{
+        mean.topda.vocs.bi[j,i] <- 0
+      }
+    }else if(mean.topda.vocs[j,i] <= 0.5 && mean.topda.vocs[j,i] > 0){
+      mean.topda.vocs.bi[j,i] <- -1
+    }
+  }
+}
+#cbind(mean.topda.vocs[,1:3], mean.topda.vocs.bi[,1:3])
+
+
+mean.topda.vocs.bi <- mean.topda.vocs.bi[match(rownames(mean.vocs), rownames(mean.topda.vocs.bi)),]
+s <- c()
+for(i in 1:nrow(mean.topda.vocs.bi)){
+  s <- append(s, sum(abs(mean.topda.vocs.bi[i,])), length(s))
+}
+
+png("PTR_heatmap_topda_strains_trt.png", width = 400, height = 700)
+heatmap.2(as.matrix(mean.topda.vocs.bi[which(s != 0),]), scale = "none", col = c("#4c6a7e", "#b2d0e4",	"white", "#fb8072", "#67000d"), trace = "none", hclustfun = function(x) hclust(x, method="ward.D"), margins = c(12,8), ColSideColors = trt.color)
+dev.off()
+
+
+##Produced - only VOCs possible that are zero, i.e. below threshold in pda
+mean.prod <- mean.topda.vocs.bi[which(rownames(mean.topda.vocs.bi) %in% prod),]
+
+png("PTR_heatmap_producedvocs_strains_trt.png", width = 600, height = 350)
+heatmap.2(as.matrix(mean.prod[rowSums(mean.prod) > 0,]), scale = "none", col = c("white", "#fb8072", "#67000d"), trace = "none", hclustfun = function(x) hclust(x, method="ward.D"), margins = c(12,8), ColSideColors = trt.color)
+dev.off()
+
+png("PTR_heatmap_producedvocs_strains_trt_portrait.png", width = 350, height = 600)
+heatmap.2(as.matrix(mean.prod[rowSums(mean.prod) > 0,]), scale = "none", col = c("white", "#fb8072", "#67000d"), trace = "none", hclustfun = function(x) hclust(x, method="ward.D"), margins = c(12,8), ColSideColors = trt.color)
+dev.off()
+
+##Consumed - only VOCs possible that are produced by pda
+mean.cons <- mean.topda.vocs.bi[which(rownames(mean.topda.vocs.bi) %in% cons),]
+
+png("PTR_heatmap_consumedvocs_strains_trt.png", width = 600, height = 350)
+heatmap.2(as.matrix(mean.cons), scale = "none", col = c("#4c6a7e", "#b2d0e4",	"white", "#fb8072", "#67000d"), trace = "none", hclustfun = function(x) hclust(x, method="ward.D"), margins = c(12,8), ColSideColors = trt.color)
+dev.off()
+
+
+png("PTR_heatmap_consumedvocs_strains_trt_portrait.png", width = 350, height = 600)
+heatmap.2(as.matrix(mean.cons), scale = "none", col = c("#4c6a7e", "#b2d0e4",	"white", "#fb8072", "#67000d"), trace = "none", hclustfun = function(x) hclust(x, method="ward.D"), margins = c(12,8), ColSideColors = trt.color)
+dev.off()
+
+png("../ROut/heatmap_legend_trt.png")
+plot.new()
+legend("topleft", legend = c("Bacteria pure culture", "Fungal pure culture", "Co-culture", "Insignificant", "Produced", "Consumed"), pch = 15, col = c("black", "#fdb462", "#ffffb3", "white", "#fb8072", "#80b1d3"), cex = 2, bty = "n")
+dev.off()
+
+```
+
+
+
+Running an LDA. There are three interesting questions here that can be addressed using this method.
+(1) separating the pure fungi from the co-cultures. This is the main effect of inoculation. In other words, this is those compounds that are generally different between any fungal isolate and its co-culture. (2) Compounds differing among pure fungal strains. (3) Compounds differing among strains under co-culture conditions.
+```{r}
+lda.ls <- vector("list", length = 15)
+names(lda.ls) <- c("cycle", "strain.all", "strain.nobac", "strain.linne", "species.all", "species.nobac", "species.linne", "asso.all", "asso.linne", "pure.strain", "pure.species", "co.strain", "co.species", "strain_trt", "species_trt")
+lda.tables.ls <- vector("list", length = 15)
+names(lda.tables.ls) <- c("cycle", "strain.all", "strain.nobac", "strain.linne", "species.all", "species.nobac", "species.linne", "asso.all", "asso.linne", "pure.strain", "pure.species", "co.strain", "co.species", "strain_trt", "species_trt")
+lda.scale.ls <- vector("list", length = 15)
+names(lda.scale.ls) <- c("cycle", "strain.all", "strain.nobac", "strain.linne", "species.all", "species.nobac", "species.linne", "asso.all", "asso.linne", "pure.strain", "pure.species", "co.strain", "co.species", "strain_trt", "species_trt")
+lda.color.ls <- vector("list", length = 15)
+names(lda.color.ls) <- c("cycle", "strain.all", "strain.nobac", "strain.linne", "species.all", "species.nobac", "species.linne", "asso.all", "asso.linne", "pure.strain", "pure.species", "co.strain", "co.species", "strain_trt", "species_trt")
+lda.predict.ls <- vector("list", length = 15)
+names(lda.predict.ls) <- c("cycle", "strain.all", "strain.nobac", "strain.linne", "species.all", "species.nobac", "species.linne", "asso.all", "asso.linne", "pure.strain", "pure.species", "co.strain", "co.species", "strain_trt", "species_trt")
+
+lda.scale.ls[[1]] <- scale(ptr.nc[,vocs])
+lda.scale.ls[[2]] <- scale(ptr.nc[,vocs])
+lda.scale.ls[[5]] <- scale(ptr.nc[,vocs])
+lda.scale.ls[[3]] <- scale(ptr.nc[-which(ptr.nc$class_name == "Bacteria"), vocs])
+lda.scale.ls[[6]] <- scale(ptr.nc[-which(ptr.nc$class_name == "Bacteria"), vocs])
+lda.scale.ls[[8]] <- scale(ptr.nc[-which(ptr.nc$class_name == "Bacteria"), vocs])
+lda.scale.ls[[4]] <- scale(ptr.nc[-which(ptr.nc$class_name %in% c("Bacteria", "PA")), vocs])
+lda.scale.ls[[7]] <- scale(ptr.nc[-which(ptr.nc$class_name %in% c("Bacteria", "PA")), vocs])
+lda.scale.ls[[9]] <- scale(ptr.nc[-which(ptr.nc$class_name %in% c("Bacteria", "PA")), vocs])
+lda.scale.ls[[10]] <- scale(ptr.nc[intersect(which(ptr.nc$trt == "c"), which(ptr.nc$type != "PA_Prw1_1")), vocs])
+lda.scale.ls[[11]] <- scale(ptr.nc[which(ptr.nc$trt == "c"), vocs])
+lda.scale.ls[[12]] <- scale(ptr.nc[intersect(which(ptr.nc$trt == "+"), which(ptr.nc$type != "PA_Prw1_1")), vocs])
+lda.scale.ls[[13]] <- scale(ptr.nc[which(ptr.nc$trt == "+"), vocs])
+lda.scale.ls[[14]] <- scale(ptr.nc[-c(which(ptr.nc$class_name == "Bacteria"), which(ptr.nc$type == "PA_Prw1_1")), vocs])
+lda.scale.ls[[15]] <- scale(ptr.nc[-c(which(ptr.nc$class_name == "Bacteria"), which(ptr.nc$type == "PA_Prw1_1")), vocs])
+
+lda.scale.ls[[1]] <- data.frame(ptr.nc$cycle, lda.scale.ls[[1]])
+lda.scale.ls[[2]] <- data.frame(ptr.nc$type, lda.scale.ls[[2]])
+lda.scale.ls[[3]] <- data.frame(as.character(ptr.nc$type[-which(ptr.nc$class_name == "Bacteria")]), lda.scale.ls[[3]])
+lda.scale.ls[[4]] <- data.frame(as.character(ptr.nc$type[-which(ptr.nc$class_name %in% c("Bacteria", "PA"))]), lda.scale.ls[[4]])
+lda.scale.ls[[5]] <- data.frame(ptr.nc$class_name, lda.scale.ls[[5]])
+lda.scale.ls[[6]] <- data.frame(as.character(ptr.nc$class_name[-which(ptr.nc$class_name == "Bacteria")]), lda.scale.ls[[6]])
+lda.scale.ls[[7]] <- data.frame(as.character(ptr.nc$class_name[-which(ptr.nc$class_name %in% c("Bacteria", "PA"))]), lda.scale.ls[[7]])
+lda.scale.ls[[8]] <- data.frame(as.character(ptr.nc$trt[-which(ptr.nc$class_name == "Bacteria")]), lda.scale.ls[[8]])
+lda.scale.ls[[9]] <- data.frame(as.character(ptr.nc$trt[-which(ptr.nc$class_name %in% c("Bacteria", "PA"))]), lda.scale.ls[[9]])
+lda.scale.ls[[10]] <- data.frame(as.character(ptr.nc$type[intersect(which(ptr.nc$trt == "c"),which(ptr.nc$type != "PA_Prw1_1"))]), lda.scale.ls[[10]])
+lda.scale.ls[[11]] <- data.frame(as.character(ptr.nc$class_name[which(ptr.nc$trt == "c")]), lda.scale.ls[[11]])
+lda.scale.ls[[12]] <- data.frame(as.character(ptr.nc$type[intersect(which(ptr.nc$trt == "+"),which(ptr.nc$type != "PA_Prw1_1"))]), lda.scale.ls[[12]])
+lda.scale.ls[[13]] <- data.frame(as.character(ptr.nc$class_name[which(ptr.nc$trt == "+")]), lda.scale.ls[[13]])
+lda.scale.ls[[14]] <- data.frame(paste(as.character(ptr.nc$type[-c(which(ptr.nc$class_name == "Bacteria"), which(ptr.nc$type == "PA_Prw1_1"))]), as.character(ptr.nc$trt[-c(which(ptr.nc$class_name == "Bacteria"), which(ptr.nc$type == "PA_Prw1_1"))]), sep = "_"), lda.scale.ls[[14]])
+lda.scale.ls[[15]] <- data.frame(paste(as.character(ptr.nc$class_name[-c(which(ptr.nc$class_name == "Bacteria"), which(ptr.nc$type == "PA_Prw1_1"))]), as.character(ptr.nc$trt[-c(which(ptr.nc$class_name == "Bacteria"), which(ptr.nc$type == "PA_Prw1_1"))]), sep = "_"), lda.scale.ls[[15]])
+
+for(i in 1:length(lda.color.ls)){
+  lda.color.ls[[i]] <- data.frame(matrix(data = NA, ncol = 3, nrow = nrow(lda.scale.ls[[i]])))
+  names(lda.color.ls[[i]]) <- c("factor", "color", "pch")
+}
+
+lda.color.ls[[1]]$factor <- lda.scale.ls[[1]][,1]
+lda.color.ls[[1]]$color[which(lda.color.ls[[1]]$factor == 1)] <- "black"
+lda.color.ls[[1]]$color[which(lda.color.ls[[1]]$factor == 2)] <- "red"
+lda.color.ls[[1]]$color[which(lda.color.ls[[1]]$factor == 3)] <- "green"
+lda.color.ls[[1]]$color[which(lda.color.ls[[1]]$factor == 4)] <- "blue"
+
+farbspecies <- read.delim("strain_species_color.txt", header = T)
+
+lda.color.ls[[2]]$factor <- lda.scale.ls[[2]][,1]
+lda.color.ls[[2]]$color <- farbspecies$color[match(lda.color.ls[[2]]$factor, farbspecies$strain)]
+
+lda.color.ls[[3]]$factor <- lda.scale.ls[[3]][,1]
+lda.color.ls[[3]]$color <- farbspecies$color[match(lda.color.ls[[3]]$factor, farbspecies$strain)]
+
+lda.color.ls[[4]]$factor <- lda.scale.ls[[4]][,1]
+lda.color.ls[[4]]$color <- farbspecies$color[match(lda.color.ls[[4]]$factor, farbspecies$strain)]
+
+for(i in c(5:7,11,13)){
+  lda.color.ls[[i]]$factor <- as.character(lda.scale.ls[[i]][,1])
+  lda.color.ls[[i]]$color[which(lda.color.ls[[i]]$factor == "Bacteria")] <- "black"
+  lda.color.ls[[i]]$color[which(lda.color.ls[[i]]$factor == "SO")] <- "#80b1d3"
+  lda.color.ls[[i]]$color[which(lda.color.ls[[i]]$factor == "SC")] <- "#e7e700"
+  lda.color.ls[[i]]$color[which(lda.color.ls[[i]]$factor == "GA")] <- "#fdb462"
+  lda.color.ls[[i]]$color[which(lda.color.ls[[i]]$factor == "HY")] <- "#fb8072"
+  lda.color.ls[[i]]$color[which(lda.color.ls[[i]]$factor == "PA")] <- "#b3de69"
+  lda.color.ls[[i]]$color[which(lda.color.ls[[i]]$factor == "EX")] <- "#bebada"
+}
+
+lda.color.ls[[10]]$factor <- as.character(lda.scale.ls[[10]][,1])
+lda.color.ls[[10]]$color <- farbspecies$color[match(lda.color.ls[[10]]$factor, farbspecies$strain)]
+lda.color.ls[[12]]$factor <- as.character(lda.scale.ls[[12]][,1])
+lda.color.ls[[12]]$color <- farbspecies$color[match(lda.color.ls[[12]]$factor, farbspecies$strain)]
+
+lda.color.ls[[14]]$factor <- as.character(lda.scale.ls[[14]][,1])
+color_helper_14 <- as.character(ptr.nc$type[-c(which(ptr.nc$class_name == "Bacteria"), which(ptr.nc$type == "PA_Prw1_1"))])
+lda.color.ls[[14]]$color <- farbspecies$color[match(color_helper_14, farbspecies$strain)]
+
+lda.color.ls[[15]]$factor <- lda.scale.ls[[15]][,1]
+color_helper_15 <- as.character(ptr.nc$class_name[-c(which(ptr.nc$class_name == "Bacteria"), which(ptr.nc$type == "PA_Prw1_1"))])
+lda.color.ls[[15]]$color[which(color_helper_15 == "SO")] <- "#80b1d3"
+lda.color.ls[[15]]$color[which(color_helper_15 == "SC")] <- "#e7e700"
+lda.color.ls[[15]]$color[which(color_helper_15 == "GA")] <- "#fdb462"
+lda.color.ls[[15]]$color[which(color_helper_15 == "HY")] <- "#fb8072"
+lda.color.ls[[15]]$color[which(color_helper_15 == "PA")] <- "#b3de69"
+lda.color.ls[[15]]$color[which(color_helper_15 == "EX")] <- "#bebada"
+
+
+lda.color.ls[[1]]$pch <- as.character(ptr.nc$trt)
+lda.color.ls[[2]]$pch <- as.character(ptr.nc$trt)
+lda.color.ls[[5]]$pch <- as.character(ptr.nc$trt)
+lda.color.ls[[3]]$pch <- as.character(ptr.nc$trt)[-which(ptr.nc$class_name == "Bacteria")]
+lda.color.ls[[6]]$pch <- as.character(ptr.nc$trt)[-which(ptr.nc$class_name == "Bacteria")]
+lda.color.ls[[4]]$pch <- as.character(ptr.nc$trt)[-which(ptr.nc$class_name %in% c("Bacteria", "PA"))]
+lda.color.ls[[7]]$pch <- as.character(ptr.nc$trt)[-which(ptr.nc$class_name %in% c("Bacteria", "PA"))]
+lda.color.ls[[10]]$pch <- 16
+lda.color.ls[[11]]$pch <- 16
+lda.color.ls[[12]]$pch <- 8
+lda.color.ls[[13]]$pch <- 8
+lda.color.ls[[14]]$pch <- as.character(ptr.nc$trt)[-c(which(ptr.nc$class_name == "Bacteria"), which(ptr.nc$type == "PA_Prw1_1"))]
+lda.color.ls[[15]]$pch <- as.character(ptr.nc$trt)[-c(which(ptr.nc$class_name == "Bacteria"), which(ptr.nc$type == "PA_Prw1_1"))]
+
+for(i in c(1:7,14,15)){
+  lda.color.ls[[i]]$pch[which(lda.color.ls[[i]]$pch == "c")] <- 16
+  lda.color.ls[[i]]$pch[which(lda.color.ls[[i]]$pch == "+")] <- 8
+  lda.color.ls[[i]]$pch[which(lda.color.ls[[i]]$pch == "no")] <- 8
+  lda.color.ls[[i]]$pch <- as.integer(lda.color.ls[[i]]$pch)
+}
+
+for(i in 1:length(lda.scale.ls)){
+  train <- sample(c(TRUE, FALSE), nrow(lda.scale.ls[[i]]), replace = T, prob = c(0.7, 0.3))
+  ptr.train <- lda.scale.ls[[i]][train,]
+  ptr.test <- lda.scale.ls[[i]][!train,]
+  names(lda.scale.ls[[i]])[1] <- "factor"
+  lda.ls[[i]] <- lda(lda.scale.ls[[i]]$factor ~ ., data = lda.scale.ls[[i]])
+  lda.predict.ls[[i]] <- predict(lda.ls[[i]], lda.scale.ls[[i]])
+  ptr.predict <- predict(lda.ls[[i]], ptr.test)
+  lda.tables.ls[[i]] <- table(ptr.predict$class, ptr.test[,1])
+  if(i %in% c(1,2,3,4,5,6,7,10,11,12,13,14,15)){
+    png(paste("PTR_LDA_ordination_", names(lda.tables.ls)[i] , ".png", sep = ""))
+    plot(predict(lda.ls[[i]], lda.scale.ls[[i]])$x[,1:2], pch = lda.color.ls[[i]]$pch, col = lda.color.ls[[i]]$color)
+  dev.off()
+  }else{
+    png(paste("PTR_LDA_ordination_", names(lda.tables.ls)[i] , ".png", sep = ""))
+    boxplot(predict(lda.ls[[i]], lda.scale.ls[[i]])$x[,1] ~ predict(lda.ls[[i]], lda.scale.ls[[i]])$class, ylab = "LDA1", xlab = "")
+  dev.off()
+  }
+}
+
+png("PTR_LDA_ordination_legend.png")
+plot.new()
+legend("bottomright", legend = c("L. exigua", "L. gamsii", "L. hyalina", "L. sclerotiella", "L. solitaria", "E. galaxiae", "Pure culture", "Co-culture"), pch = c(rep(16, 7), 8), col = c("#bebada", "#fdb462", "#fb8072", "#e7e700", "#80b1d3", "#b3de69", "gray", "gray"), bty = "n", cex = 1.2)
+dev.off()
+
+png("PTR_LDA_ordination_legend_time.png")
+plot.new()
+legend("bottomright", legend = c("Cycle 1", "Cycle 2", "Cycle 3", "Cycle 4"), pch = 16, col = c("black", "red", "green", "blue"), bty = "n", cex = 1.2)
+dev.off()
+
+
+farbe.strains.lda <- lda.color.ls$strain_trt[!duplicated(lda.color.ls$strain_trt$color),]
+farbe.strains.lda <- farbe.strains.lda[order(farbe.strains.lda$factor),]
+
+farbe.strains.lda$factor <- substr(farbe.strains.lda$factor,1,nchar(farbe.strains.lda$factor)-2)
+farbe.strains.lda$factor <- substr(farbe.strains.lda$factor,4,nchar(farbe.strains.lda$factor))
+
+png("PTR_LDA_strains_legend.png", height = 550)
+plot.new()
+legend("topleft", bty = "n", legend = c(rep("", nrow(farbe.strains.lda)), farbe.strains.lda$factor), col = c(farbe.strains.lda$color, farbe.strains.lda$color), pch = c(rep(8,nrow(farbe.strains.lda)), rep(16, nrow(farbe.strains.lda))), ncol = 2)
+dev.off()
+
+farbe.species.lda <- lda.color.ls$species_trt[!duplicated(lda.color.ls$species_trt$color),]
+farbe.species.lda <- farbe.species.lda[order(farbe.species.lda$factor),]
+png("PTR_LDA_species_legend.png")
+plot.new()
+legend("topleft", bty = "n", legend = c("L. exigua", "L. gamsii", "L. hyalina", "E. galaxiae", "L. sclerotiella", "L. solitaria", "", "", "", "", "", "")[c(1:3,5,6,4,7:12)], col = c(farbe.species.lda$color, farbe.species.lda$color)[c(1:3,5,6,4)], pch = c(rep(16,6), rep(8,6)), ncol = 2, cex = 2, text.font = 3)
+dev.off()
+
+
+#accuracies
+sum(as.vector(lda.tables.ls$species.all))
+sum(diag(lda.tables.ls$species.all))
+185/193
+
+sum(as.vector(lda.tables.ls$species_trt))
+sum(diag(lda.tables.ls$species_trt))
+144/154
+
+sum(as.vector(lda.tables.ls$strain.nobac))
+sum(diag(lda.tables.ls$strain.nobac))
+156/185
+
+sum(as.vector(lda.tables.ls$strain_trt))
+sum(diag(lda.tables.ls$strain_trt))
+103/170
+
+
+#Growth patterns to volatiles and zero and high coefficients
+strains.df <- data.frame(lda.predict.ls$strain_trt$x, as.character(lda.predict.ls$strain_trt$class))
+names(strains.df)[ncol(strains.df)] <- "predicted.class"
+strains.df$pch <- 0
+for(i in 1:nrow(strains.df)){
+  strains.df$pch[i] <- tail(unlist(strsplit(strains.df$predicted.class[i], split = "")), n=1)
+}
+strains.df$pch[which(strains.df$pch == "+")] <- 8
+strains.df$pch[which(strains.df$pch == "c")] <- 16
+strains.df$strain <- strains.df$predicted.class
+strains.df$strain <- gsub("_c", "", strains.df$strain)
+strains.df$strain <- gsub("_\\+", "", strains.df$strain)
+
+strains.df$color <- farbspecies$color[match(strains.df$strain, farbspecies$strain)]
+
+pos <- c("SC_HFSF83_c", "GA_Ks2_13_c", "EX_Ks2_4_c", "SO_OAS5_c", "GA_Pats3_1_c", "HY_Patw2_7_c", "PA_Pfs28_c", "PA_Pr1s18_c", "SC_HFSF83_+", "GA_Ks2_13_+", "EX_Ks2_4_+", "SO_OAS5_+", "GA_Pats3_1_+", "HY_Patw2_7_+", "PA_Pfs28_+", "PA_Pr1s18_+")
+neg <- c("EX_HFSF103_c", "SC_HFSF81_c", "SC_HFSF85_c", "HY_Ks1_7_c", "PA_M1_c", "SO_OAS3_c", "GA_Pr2s1_c", "PA_Prw1_1_c", "EX_HFSF103_+", "SC_HFSF81_+", "SC_HFSF85_+", "HY_Ks1_7_+", "PA_M1_+", "SO_OAS3_+", "GA_Pr2s1_+", "PA_Prw1_1_+")
+un.strains <- as.character(lda.predict.ls[[14]]$class)[-which(as.character(lda.predict.ls[[14]]$class) %in% c(pos, neg))]
+
+pos.strains.df <- strains.df[which(strains.df$predicted.class %in% pos),]
+neg.strains.df <- strains.df[which(strains.df$predicted.class %in% neg),]
+un.strains.df <- strains.df[which(strains.df$predicted.class %in% un.strains),]
+zero.strains.df <- strains.df[which(strains.df$predicted.class %in% c("PA_Prw1_1_c", "SC_HFSF85_c", "SO_OAS3_c", "EX_Pr2s22_c", "SO_OAS4_c", "PA_Prw1_1_+", "SC_HFSF85_+", "SO_OAS3_+", "EX_Pr2s22_+", "SO_OAS4_+")),]
+high.strains.df <- strains.df[which(strains.df$predicted.class %in% c("SC_HFSF81_c", "EX_Pats4_2_c", "GA_HFSF103_c", "PA_M22_c", "PA_M1_c", "PA_Pfs28_c", "PA_Pr1s18_c", "GA_M42_c", "HY_Ks1_7_c", "SC_HFSF81_+", "EX_Pats4_2_+", "GA_HFSF103_+", "PA_M22_+", "PA_M1_+", "PA_Pfs28_+", "PA_Pr1s18_+", "GA_M42_+", "HY_Ks1_7_+")),]
+
+png("PTR_LDA_pos_growth.png")
+plot(pos.strains.df[,1:2], pch = as.numeric(pos.strains.df$pch), col = pos.strains.df$color, xlim = c(-15, 15), ylim = c(-15,15))
+abline(h = 0, col = "grey", lty = 3)
+abline(v = 0, col = "grey", lty = 3)
+dev.off()
+
+png("PTR_LDA_neg_growth.png")
+plot(neg.strains.df[,1:2], pch = as.numeric(neg.strains.df$pch), col = neg.strains.df$color, xlim = c(-15, 15), ylim = c(-15,15))
+abline(h = 0, col = "grey", lty = 3)
+abline(v = 0, col = "grey", lty = 3)
+dev.off()
+
+png("PTR_LDA_unaffected_growth.png")
+plot(un.strains.df[,1:2], pch = as.numeric(un.strains.df$pch), col = un.strains.df$color, xlim = c(-15, 15), ylim = c(-15,15))
+abline(h = 0, col = "grey", lty = 3)
+abline(v = 0, col = "grey", lty = 3)
+dev.off()
+
+png("PTR_LDA_zero_coefficients.png")
+plot(zero.strains.df[,1:2], pch = as.numeric(zero.strains.df$pch), col = zero.strains.df$color, xlim = c(-15, 15), ylim = c(-15,15))
+abline(h = 0, col = "grey", lty = 3)
+abline(v = 0, col = "grey", lty = 3)
+dev.off()
+
+png("PTR_LDA_high_coefficients.png")
+plot(high.strains.df[,1:2], pch = as.numeric(high.strains.df$pch), col = high.strains.df$color, xlim = c(-15, 15), ylim = c(-15,15))
+abline(h = 0, col = "grey", lty = 3)
+abline(v = 0, col = "grey", lty = 3)
+dev.off()
+
+
+
+####checking dimensions
+pdf("PTR_LDA_dimensions_check_zero.pdf")
+for(i in seq(1,45, by = 2)){
+  plot(zero.strains.df[,i:(i+1)], pch = as.numeric(zero.strains.df$pch), col = zero.strains.df$color, xlim = c(-15, 15), ylim = c(-15,15))
+  abline(h = 0, col = "grey", lty = 3)
+  abline(v = 0, col = "grey", lty = 3)
+}
+dev.off()
+
+pdf("PTR_LDA_dimensions_check_high.pdf")
+for(i in seq(1,45, by = 2)){
+  plot(high.strains.df[,i:(i+1)], pch = as.numeric(high.strains.df$pch), col = high.strains.df$color, xlim = c(-15, 15), ylim = c(-15,15))
+  abline(h = 0, col = "grey", lty = 3)
+  abline(v = 0, col = "grey", lty = 3)
+}
+dev.off()
+
+pdf("PTR_LDA_dimensions_check_unaffected_growth.pdf")
+for(i in seq(1,45, by = 2)){
+  plot(un.strains.df[,i:(i+1)], pch = as.numeric(un.strains.df$pch), col = un.strains.df$color, xlim = c(-15, 15), ylim = c(-15,15))
+  abline(h = 0, col = "grey", lty = 3)
+  abline(v = 0, col = "grey", lty = 3)
+}
+dev.off()
+
+pdf("PTR_LDA_dimensions_check_posgrowth.pdf")
+for(i in seq(1,45, by = 2)){
+  plot(pos.strains.df[,i:(i+1)], pch = as.numeric(pos.strains.df$pch), col = pos.strains.df$color, xlim = c(-15, 15), ylim = c(-15,15))
+  abline(h = 0, col = "grey", lty = 3)
+  abline(v = 0, col = "grey", lty = 3)
+}
+dev.off()
+
+pdf("PTR_LDA_dimensions_check_neggrowth.pdf")
+for(i in seq(1,45, by = 2)){
+  plot(neg.strains.df[,i:(i+1)], pch = as.numeric(neg.strains.df$pch), col = neg.strains.df$color, xlim = c(-15, 15), ylim = c(-15,15))
+  abline(h = 0, col = "grey", lty = 3)
+  abline(v = 0, col = "grey", lty = 3)
+}
+dev.off()
+
+
+######################################
+##Checking assumptions
+m <- betadisper(dist(lda.scale.ls[[15]][,-ncol(lda.scale.ls[[15]])]), lda.scale.ls[[15]]$factor)
+anova(m)
+boxplot(m, las = 3)
+
+pdf("PTR_LDA_assumptions.pdf")
+for(i in 1:length(lda.scale.ls)){
+  m <- betadisper(dist(lda.scale.ls[[i]][,-ncol(lda.scale.ls[[i]])]), lda.scale.ls[[i]]$factor)
+  boxplot(m, las = 3)
+}
+dev.off()
+
+
+######Extracting centroid distances for correlation to coefficients (lm) and growth
+centro <- aggregate(lda.predict.ls$strain_trt$x[,1], list(lda.scale.ls$strain_trt$factor), FUN = mean)
+names(centro) <- c("strain_trt", "LD1")
+for(i in 2:ncol(lda.predict.ls$strain_trt$x)){
+  centro <- data.frame(centro, aggregate(lda.predict.ls$strain_trt$x[,i], list(lda.scale.ls$strain_trt$factor), FUN = mean)[,2])
+  names(centro)[i+1] <- paste("LD", i, sep = "")
+}
+
+centro2 <- data.frame(matrix(data = NA, ncol = (ncol(centro)-1), nrow = (length(levels(as.factor(lda.scale.ls$strain_trt$factor)))/2)))
+rownames(centro2) <- levels(ptr.nc$type)[-c(1,20)]
+for(i in 2:ncol(centro)){
+  centro2[,i-1] <- centro[seq(1,48, by = 2),i]-centro[seq(2,48, by = 2),i]
+  centro2[,i-1] <- centro2[,i-1]^2
+  names(centro2)[i-1] <- paste("LD", i-1, sep = "")
+}
+save(centro2, file = "LDA_centroids.RData")
+```
+
