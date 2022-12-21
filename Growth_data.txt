@@ -1,0 +1,501 @@
+species	strain	Media	asso	replicate	growthrate	location	source_asso
+Exigua	HFSF103	lcA	bac	1	7.172727273	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	lcA	bac	2	7.324242424	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	lcA	bac	3	6.884848485	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	lcA	bac	4	7.639393939	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	lcA	bac	5	6.948484848	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	lcA	cured	1	7.663636364	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	lcA	cured	2	7.866666667	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	lcA	cured	3	7.843939394	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	lcA	cured	4	7.975757576	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	lcA	cured	5	7.792424242	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	PDA	bac	1	7.295454545	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	PDA	bac	2	7.090909091	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	PDA	bac	3	7.163636364	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	PDA	bac	4	7.684848485	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	PDA	bac	5	7.478787879	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	PDA	cured	1	8.081818182	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	PDA	cured	2	8.21969697	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	PDA	cured	3	7.903030303	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	PDA	cured	4	7.818181818	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF103	PDA	cured	5	8.125757576	Hafelekar	Pseudomonas frederiksbergensis
+Exigua	HFSF26	lcA	bac	1	8.693939394	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	lcA	bac	2	8.509090909	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	lcA	bac	3	8.912121212	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	lcA	bac	4	8.660606061	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	lcA	bac	5	8.675757576	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	lcA	cured	1	8.23030303	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	lcA	cured	2	8.575757576	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	lcA	cured	3	8.251515152	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	lcA	cured	4	8.448484848	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	lcA	cured	5	8.481818182	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	PDA	bac	1	8.351515152	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	PDA	bac	2	9.23030303	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	PDA	bac	3	8.248484848	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	PDA	bac	4	8.184848485	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	PDA	bac	5	7.796969697	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	PDA	cured	1	7.745454545	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	PDA	cured	2	8.075757576	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	PDA	cured	3	7.827272727	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	PDA	cured	4	7.709090909	Hafelekar	Pseudomonas helmanticensis
+Exigua	HFSF26	PDA	cured	5	7.766666667	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	lcA	bac	1	7.715151515	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	lcA	bac	2	7.721212121	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	lcA	bac	3	6.445454545	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	lcA	bac	4	6.072727273	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	lcA	bac	5	6.4	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	lcA	cured	1	7.303030303	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	lcA	cured	2	7.024242424	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	lcA	cured	3	6.948484848	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	lcA	cured	4	6.748484848	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	lcA	cured	5	6.739393939	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	PDA	bac	1	7.745454545	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	PDA	bac	2	7.354545455	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	PDA	bac	3	7.109090909	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	PDA	bac	4	7.109090909	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	PDA	bac	5	6.851515152	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	PDA	cured	1	7.572727273	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	PDA	cured	2	7.863636364	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	PDA	cured	3	7.709090909	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	PDA	cured	4	7.712121212	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF81	PDA	cured	5	7.772727273	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF83	lcA	bac	1	8.381818182	Hafelekar	no
+Sclerotiella	HFSF83	lcA	bac	2	8.560606061	Hafelekar	no
+Sclerotiella	HFSF83	lcA	bac	3	8.551515152	Hafelekar	no
+Sclerotiella	HFSF83	lcA	bac	4	8.5	Hafelekar	no
+Sclerotiella	HFSF83	lcA	bac	5	8.636363636	Hafelekar	no
+Sclerotiella	HFSF83	lcA	cured	1	7.418181818	Hafelekar	no
+Sclerotiella	HFSF83	lcA	cured	2	7.821212121	Hafelekar	no
+Sclerotiella	HFSF83	lcA	cured	3	7.087878788	Hafelekar	no
+Sclerotiella	HFSF83	lcA	cured	4	7.218181818	Hafelekar	no
+Sclerotiella	HFSF83	lcA	cured	5	7.236363636	Hafelekar	no
+Sclerotiella	HFSF83	PDA	bac	1	9.036363636	Hafelekar	no
+Sclerotiella	HFSF83	PDA	bac	2	8.639393939	Hafelekar	no
+Sclerotiella	HFSF83	PDA	bac	3	8.490909091	Hafelekar	no
+Sclerotiella	HFSF83	PDA	bac	4	8.309090909	Hafelekar	no
+Sclerotiella	HFSF83	PDA	bac	5	8.015151515	Hafelekar	no
+Sclerotiella	HFSF83	PDA	cured	1	8.015151515	Hafelekar	no
+Sclerotiella	HFSF83	PDA	cured	2	7.3	Hafelekar	no
+Sclerotiella	HFSF83	PDA	cured	3	7.333333333	Hafelekar	no
+Sclerotiella	HFSF83	PDA	cured	4	7.548484848	Hafelekar	no
+Sclerotiella	HFSF83	PDA	cured	5	6.618181818	Hafelekar	no
+Sclerotiella	HFSF85	lcA	bac	1	6.572727273	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	lcA	bac	2	6.718181818	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	lcA	bac	3	6.757575758	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	lcA	bac	4	6.948484848	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	lcA	bac	5	7.251515152	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	lcA	cured	1	6.754545455	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	lcA	cured	2	6.384848485	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	lcA	cured	3	6.903030303	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	lcA	cured	4	6.893939394	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	lcA	cured	5	6.815151515	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	PDA	bac	1	7.396969697	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	PDA	bac	2	7.539393939	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	PDA	bac	3	7.63030303	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	PDA	bac	4	7.593939394	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	PDA	bac	5	7.354545455	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	PDA	cured	1	8.312121212	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	PDA	cured	2	8.442424242	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	PDA	cured	3	8.439393939	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	PDA	cured	4	7.909090909	Hafelekar	Pseudomonas helmanticensis
+Sclerotiella	HFSF85	PDA	cured	5	8.421212121	Hafelekar	Pseudomonas helmanticensis
+Hyalina	Ks1_7	lcA	bac	1	8.081818182	Kühtai	no
+Hyalina	Ks1_7	lcA	bac	2	8.048484848	Kühtai	no
+Hyalina	Ks1_7	lcA	bac	3	7.812121212	Kühtai	no
+Hyalina	Ks1_7	lcA	bac	4	7.927272727	Kühtai	no
+Hyalina	Ks1_7	lcA	bac	5	7.848484848	Kühtai	no
+Hyalina	Ks1_7	lcA	cured	1	7.627272727	Kühtai	no
+Hyalina	Ks1_7	lcA	cured	2	7.984848485	Kühtai	no
+Hyalina	Ks1_7	lcA	cured	3	7.863636364	Kühtai	no
+Hyalina	Ks1_7	lcA	cured	4	8.033333333	Kühtai	no
+Hyalina	Ks1_7	lcA	cured	5	7.860606061	Kühtai	no
+Hyalina	Ks1_7	PDA	bac	1	8.448484848	Kühtai	no
+Hyalina	Ks1_7	PDA	bac	2	8.424242424	Kühtai	no
+Hyalina	Ks1_7	PDA	bac	3	8.606060606	Kühtai	no
+Hyalina	Ks1_7	PDA	bac	4	8.4	Kühtai	no
+Hyalina	Ks1_7	PDA	bac	5	8.175757576	Kühtai	no
+Hyalina	Ks1_7	PDA	cured	1	8.563636364	Kühtai	no
+Hyalina	Ks1_7	PDA	cured	2	8.563636364	Kühtai	no
+Hyalina	Ks1_7	PDA	cured	3	8.521212121	Kühtai	no
+Hyalina	Ks1_7	PDA	cured	4	8.718181818	Kühtai	no
+Hyalina	Ks1_7	PDA	cured	5	8.684848485	Kühtai	no
+Hyalina	Ks2_11	lcA	bac	1	8.221212121	Kühtai	no
+Hyalina	Ks2_11	lcA	bac	2	8.039393939	Kühtai	no
+Hyalina	Ks2_11	lcA	bac	3	8.139393939	Kühtai	no
+Hyalina	Ks2_11	lcA	bac	4	8.036363636	Kühtai	no
+Hyalina	Ks2_11	lcA	bac	5	8.118181818	Kühtai	no
+Hyalina	Ks2_11	lcA	cured	1	7.751515152	Kühtai	no
+Hyalina	Ks2_11	lcA	cured	2	7.627272727	Kühtai	no
+Hyalina	Ks2_11	lcA	cured	3	7.654545455	Kühtai	no
+Hyalina	Ks2_11	lcA	cured	4	7.657575758	Kühtai	no
+Hyalina	Ks2_11	lcA	cured	5	7.624242424	Kühtai	no
+Hyalina	Ks2_11	PDA	bac	1	8.566666667	Kühtai	no
+Hyalina	Ks2_11	PDA	bac	2	8.551515152	Kühtai	no
+Hyalina	Ks2_11	PDA	bac	3	8.575757576	Kühtai	no
+Hyalina	Ks2_11	PDA	bac	4	8.451515152	Kühtai	no
+Hyalina	Ks2_11	PDA	bac	5	8.651515152	Kühtai	no
+Hyalina	Ks2_11	PDA	cured	1	8.536363636	Kühtai	no
+Hyalina	Ks2_11	PDA	cured	2	8.587878788	Kühtai	no
+Hyalina	Ks2_11	PDA	cured	3	8.46969697	Kühtai	no
+Hyalina	Ks2_11	PDA	cured	4	8.815151515	Kühtai	no
+Hyalina	Ks2_11	PDA	cured	5	8.627272727	Kühtai	no
+Hyalina	Ks2_12	lcA	bac	1	7.957575758	Kühtai	no
+Hyalina	Ks2_12	lcA	bac	2	8.06969697	Kühtai	no
+Hyalina	Ks2_12	lcA	bac	3	8.142424242	Kühtai	no
+Hyalina	Ks2_12	lcA	bac	4	7.478787879	Kühtai	no
+Hyalina	Ks2_12	lcA	bac	5	6.972727273	Kühtai	no
+Hyalina	Ks2_12	lcA	cured	1	7.748484848	Kühtai	no
+Hyalina	Ks2_12	lcA	cured	2	7.139393939	Kühtai	no
+Hyalina	Ks2_12	lcA	cured	3	7.463636364	Kühtai	no
+Hyalina	Ks2_12	lcA	cured	4	7.345454545	Kühtai	no
+Hyalina	Ks2_12	lcA	cured	5	7.715151515	Kühtai	no
+Hyalina	Ks2_12	PDA	bac	1	8.366666667	Kühtai	no
+Hyalina	Ks2_12	PDA	bac	2	8.715151515	Kühtai	no
+Hyalina	Ks2_12	PDA	bac	3	8.621212121	Kühtai	no
+Hyalina	Ks2_12	PDA	bac	4	8.651515152	Kühtai	no
+Hyalina	Ks2_12	PDA	bac	5	8.706060606	Kühtai	no
+Hyalina	Ks2_12	PDA	cured	1	8.5	Kühtai	no
+Hyalina	Ks2_12	PDA	cured	2	8.521212121	Kühtai	no
+Hyalina	Ks2_12	PDA	cured	3	8.721212121	Kühtai	no
+Hyalina	Ks2_12	PDA	cured	4	8.636363636	Kühtai	no
+Hyalina	Ks2_12	PDA	cured	5	8.657575758	Kühtai	no
+Gamsii	Ks2_13	lcA	bac	1	8.027272727	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	lcA	bac	2	7.539393939	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	lcA	bac	3	8.024242424	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	lcA	bac	4	7.809090909	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	lcA	bac	5	7.709090909	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	lcA	cured	1	7.757575758	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	lcA	cured	2	7.490909091	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	lcA	cured	3	7.366666667	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	lcA	cured	4	7.509090909	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	lcA	cured	5	7.451515152	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	PDA	bac	1	7.809090909	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	PDA	bac	2	7.821212121	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	PDA	bac	3	8.16969697	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	PDA	bac	4	8.115151515	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	PDA	bac	5	8	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	PDA	cured	1	7.807575758	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	PDA	cured	2	7.727272727	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	PDA	cured	3	7.684848485	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	PDA	cured	4	7.7	Kühtai	Mycoavidus cysteinexigens
+Gamsii	Ks2_13	PDA	cured	5	7.771212121	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	lcA	bac	1	9.184848485	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	lcA	bac	2	9.815151515	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	lcA	bac	3	9.554545455	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	lcA	bac	4	10.00606061	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	lcA	bac	5	9.806060606	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	lcA	cured	1	7.178787879	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	lcA	cured	2	7.412121212	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	lcA	cured	3	7.639393939	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	lcA	cured	4	7.493939394	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	lcA	cured	5	7.842424242	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	PDA	bac	1	9.827272727	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	PDA	bac	2	9.887878788	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	PDA	bac	3	9.551515152	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	PDA	bac	4	10.00909091	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	PDA	bac	5	9.572727273	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	PDA	cured	1	8.957575758	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	PDA	cured	2	8.790909091	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	PDA	cured	3	8.951515152	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	PDA	cured	4	8.933333333	Kühtai	Mycoavidus cysteinexigens
+Exigua	Ks2_4	PDA	cured	5	8.993939394	Kühtai	Mycoavidus cysteinexigens
+E.Galaxi	M1	lcA	bac	1	6.809090909	Haggen	no
+E.Galaxi	M1	lcA	bac	2	6.557575758	Haggen	no
+E.Galaxi	M1	lcA	bac	3	6.790909091	Haggen	no
+E.Galaxi	M1	lcA	bac	4	6.627272727	Haggen	no
+E.Galaxi	M1	lcA	bac	5	6.654545455	Haggen	no
+E.Galaxi	M1	lcA	cured	1	6.248484848	Haggen	no
+E.Galaxi	M1	lcA	cured	2	6.145454545	Haggen	no
+E.Galaxi	M1	lcA	cured	3	6.209090909	Haggen	no
+E.Galaxi	M1	lcA	cured	4	5.557575758	Haggen	no
+E.Galaxi	M1	lcA	cured	5	6.206060606	Haggen	no
+E.Galaxi	M1	PDA	bac	1	7.154545455	Haggen	no
+E.Galaxi	M1	PDA	bac	2	6.66969697	Haggen	no
+E.Galaxi	M1	PDA	bac	3	6.881818182	Haggen	no
+E.Galaxi	M1	PDA	bac	4	6.842424242	Haggen	no
+E.Galaxi	M1	PDA	bac	5	6.875757576	Haggen	no
+E.Galaxi	M1	PDA	cured	1	7.266666667	Haggen	no
+E.Galaxi	M1	PDA	cured	2	7.451515152	Haggen	no
+E.Galaxi	M1	PDA	cured	3	7.424242424	Haggen	no
+E.Galaxi	M1	PDA	cured	4	7.454545455	Haggen	no
+E.Galaxi	M1	PDA	cured	5	7.46969697	Haggen	no
+Gamsii	M10	lcA	bac	1	8.387878788	Haggen	no
+Gamsii	M10	lcA	bac	2	9.012121212	Haggen	no
+Gamsii	M10	lcA	bac	3	8.415151515	Haggen	no
+Gamsii	M10	lcA	bac	4	8.036363636	Haggen	no
+Gamsii	M10	lcA	bac	5	8.96969697	Haggen	no
+Gamsii	M10	lcA	cured	1	8.318181818	Haggen	no
+Gamsii	M10	lcA	cured	2	8.16969697	Haggen	no
+Gamsii	M10	lcA	cured	3	8.112121212	Haggen	no
+Gamsii	M10	lcA	cured	4	8.090909091	Haggen	no
+Gamsii	M10	lcA	cured	5	8.251515152	Haggen	no
+Gamsii	M10	PDA	bac	1	8.684848485	Haggen	no
+Gamsii	M10	PDA	bac	2	8.075757576	Haggen	no
+Gamsii	M10	PDA	bac	3	8.678787879	Haggen	no
+Gamsii	M10	PDA	bac	4	8.533333333	Haggen	no
+Gamsii	M10	PDA	bac	5	8.215151515	Haggen	no
+Gamsii	M10	PDA	cured	1	8.215151515	Haggen	no
+Gamsii	M10	PDA	cured	2	8.23030303	Haggen	no
+Gamsii	M10	PDA	cured	3	8.293939394	Haggen	no
+Gamsii	M10	PDA	cured	4	8.215151515	Haggen	no
+Gamsii	M10	PDA	cured	5	8.224242424	Haggen	no
+E.Galaxi	M22	lcA	bac	1	7.227272727	Haggen	Pseudomonas sp.
+E.Galaxi	M22	lcA	bac	2	7.575757576	Haggen	Pseudomonas sp.
+E.Galaxi	M22	lcA	bac	3	7.242424242	Haggen	Pseudomonas sp.
+E.Galaxi	M22	lcA	bac	4	7.387878788	Haggen	Pseudomonas sp.
+E.Galaxi	M22	lcA	bac	5	7.23030303	Haggen	Pseudomonas sp.
+E.Galaxi	M22	lcA	cured	1	6.315151515	Haggen	Pseudomonas sp.
+E.Galaxi	M22	lcA	cured	2	6.463636364	Haggen	Pseudomonas sp.
+E.Galaxi	M22	lcA	cured	3	6.624242424	Haggen	Pseudomonas sp.
+E.Galaxi	M22	lcA	cured	4	6.640909091	Haggen	Pseudomonas sp.
+E.Galaxi	M22	lcA	cured	5	6.254545455	Haggen	Pseudomonas sp.
+E.Galaxi	M22	PDA	bac	1	6.975757576	Haggen	Pseudomonas sp.
+E.Galaxi	M22	PDA	bac	2	7.642424242	Haggen	Pseudomonas sp.
+E.Galaxi	M22	PDA	bac	3	6.948484848	Haggen	Pseudomonas sp.
+E.Galaxi	M22	PDA	bac	4	6.984848485	Haggen	Pseudomonas sp.
+E.Galaxi	M22	PDA	bac	5	7.166666667	Haggen	Pseudomonas sp.
+E.Galaxi	M22	PDA	cured	1	7.239393939	Haggen	Pseudomonas sp.
+E.Galaxi	M22	PDA	cured	2	6.916666667	Haggen	Pseudomonas sp.
+E.Galaxi	M22	PDA	cured	3	7.028787879	Haggen	Pseudomonas sp.
+E.Galaxi	M22	PDA	cured	4	7.224242424	Haggen	Pseudomonas sp.
+E.Galaxi	M22	PDA	cured	5	7.281818182	Haggen	Pseudomonas sp.
+Gamsii	M42	lcA	bac	1	6.745454545	Haggen	uncultured proteobacterium 
+Gamsii	M42	lcA	bac	2	7.206060606	Haggen	uncultured proteobacterium 
+Gamsii	M42	lcA	bac	3	7.603030303	Haggen	uncultured proteobacterium 
+Gamsii	M42	lcA	bac	4	7.778787879	Haggen	uncultured proteobacterium 
+Gamsii	M42	lcA	bac	5	7.745454545	Haggen	uncultured proteobacterium 
+Gamsii	M42	lcA	cured	1	7.815151515	Haggen	uncultured proteobacterium 
+Gamsii	M42	lcA	cured	2	7.8	Haggen	uncultured proteobacterium 
+Gamsii	M42	lcA	cured	3	8.048484848	Haggen	uncultured proteobacterium 
+Gamsii	M42	lcA	cured	4	7.651515152	Haggen	uncultured proteobacterium 
+Gamsii	M42	lcA	cured	5	7.760606061	Haggen	uncultured proteobacterium 
+Gamsii	M42	PDA	bac	1	8.112121212	Haggen	uncultured proteobacterium 
+Gamsii	M42	PDA	bac	2	7.460606061	Haggen	uncultured proteobacterium 
+Gamsii	M42	PDA	bac	3	7.642424242	Haggen	uncultured proteobacterium 
+Gamsii	M42	PDA	bac	4	7.821212121	Haggen	uncultured proteobacterium 
+Gamsii	M42	PDA	bac	5	7.927272727	Haggen	uncultured proteobacterium 
+Gamsii	M42	PDA	cured	1	7.966666667	Haggen	uncultured proteobacterium 
+Gamsii	M42	PDA	cured	2	7.801515152	Haggen	uncultured proteobacterium 
+Gamsii	M42	PDA	cured	3	7.659090909	Haggen	uncultured proteobacterium 
+Gamsii	M42	PDA	cured	4	7.834848485	Haggen	uncultured proteobacterium 
+Gamsii	M42	PDA	cured	5	7.793939394	Haggen	uncultured proteobacterium 
+Solitaria	OAS3	lcA	bac	1	6.515151515	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	lcA	bac	2	6.048484848	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	lcA	bac	3	6.303030303	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	lcA	bac	4	6.263636364	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	lcA	bac	5	7.215151515	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	lcA	cured	1	6.360606061	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	lcA	cured	2	6.068181818	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	lcA	cured	3	5.9	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	lcA	cured	4	5.640909091	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	lcA	cured	5	6.498484848	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	PDA	bac	1	3.757575758	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	PDA	bac	2	3.9	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	PDA	bac	3	3.684848485	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	PDA	bac	4	3.654545455	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	PDA	bac	5	3.663636364	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	PDA	cured	1	3.5	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	PDA	cured	2	3.642424242	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	PDA	cured	3	3.548484848	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	PDA	cured	4	3.751515152	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS3	PDA	cured	5	3.462121212	Obergurgl	Pseudomonas salomonii
+Solitaria	OAS4	lcA	bac	1	5.736363636	Obergurgl	no
+Solitaria	OAS4	lcA	bac	2	6.436363636	Obergurgl	no
+Solitaria	OAS4	lcA	bac	3	6.184848485	Obergurgl	no
+Solitaria	OAS4	lcA	bac	4	6.657575758	Obergurgl	no
+Solitaria	OAS4	lcA	bac	5	5.960606061	Obergurgl	no
+Solitaria	OAS4	lcA	cured	1	6.740909091	Obergurgl	no
+Solitaria	OAS4	lcA	cured	2	6.553030303	Obergurgl	no
+Solitaria	OAS4	lcA	cured	3	6.460606061	Obergurgl	no
+Solitaria	OAS4	lcA	cured	4	6.963636364	Obergurgl	no
+Solitaria	OAS4	lcA	cured	5	6.875757576	Obergurgl	no
+Solitaria	OAS4	PDA	bac	1	3.412121212	Obergurgl	no
+Solitaria	OAS4	PDA	bac	2	3.836363636	Obergurgl	no
+Solitaria	OAS4	PDA	bac	3	3.506060606	Obergurgl	no
+Solitaria	OAS4	PDA	bac	4	3.83030303	Obergurgl	no
+Solitaria	OAS4	PDA	bac	5	3.984848485	Obergurgl	no
+Solitaria	OAS4	PDA	cured	1	3.604545455	Obergurgl	no
+Solitaria	OAS4	PDA	cured	2	3.351515152	Obergurgl	no
+Solitaria	OAS4	PDA	cured	3	3.46969697	Obergurgl	no
+Solitaria	OAS4	PDA	cured	4	3.889393939	Obergurgl	no
+Solitaria	OAS4	PDA	cured	5	4.024242424	Obergurgl	no
+Solitaria	OAS5	lcA	bac	1	6.696969697	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	lcA	bac	2	5.196969697	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	lcA	bac	3	6.660606061	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	lcA	bac	4	6.081818182	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	lcA	bac	5	6.724242424	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	lcA	cured	1	7.542424242	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	lcA	cured	2	7.272727273	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	lcA	cured	3	7.784848485	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	lcA	cured	4	7.246969697	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	lcA	cured	5	8.293939394	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	PDA	bac	1	3.833333333	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	PDA	bac	2	3.524242424	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	PDA	bac	3	3.53030303	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	PDA	bac	4	3.742424242	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	PDA	bac	5	3.633333333	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	PDA	cured	1	3.860606061	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	PDA	cured	2	3.722727273	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	PDA	cured	3	3.65	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	PDA	cured	4	3.763636364	Obergurgl	Pseudomonas helmanticensis
+Solitaria	OAS5	PDA	cured	5	3.55	Obergurgl	Pseudomonas helmanticensis
+Gamsii	Pats3_1	lcA	bac	1	8.293939394	Patscherkofel	no
+Gamsii	Pats3_1	lcA	bac	2	8.666666667	Patscherkofel	no
+Gamsii	Pats3_1	lcA	bac	3	8.318181818	Patscherkofel	no
+Gamsii	Pats3_1	lcA	bac	4	8.212121212	Patscherkofel	no
+Gamsii	Pats3_1	lcA	bac	5	8.303030303	Patscherkofel	no
+Gamsii	Pats3_1	lcA	cured	1	8.387878788	Patscherkofel	no
+Gamsii	Pats3_1	lcA	cured	2	8.209090909	Patscherkofel	no
+Gamsii	Pats3_1	lcA	cured	3	8.363636364	Patscherkofel	no
+Gamsii	Pats3_1	lcA	cured	4	8.136363636	Patscherkofel	no
+Gamsii	Pats3_1	lcA	cured	5	8.163636364	Patscherkofel	no
+Gamsii	Pats3_1	PDA	bac	1	8.845454545	Patscherkofel	no
+Gamsii	Pats3_1	PDA	bac	2	9.6	Patscherkofel	no
+Gamsii	Pats3_1	PDA	bac	3	8.818181818	Patscherkofel	no
+Gamsii	Pats3_1	PDA	bac	4	8.987878788	Patscherkofel	no
+Gamsii	Pats3_1	PDA	bac	5	8.793939394	Patscherkofel	no
+Gamsii	Pats3_1	PDA	cured	1	7.83030303	Patscherkofel	no
+Gamsii	Pats3_1	PDA	cured	2	7.963636364	Patscherkofel	no
+Gamsii	Pats3_1	PDA	cured	3	7.972727273	Patscherkofel	no
+Gamsii	Pats3_1	PDA	cured	4	7.854545455	Patscherkofel	no
+Gamsii	Pats3_1	PDA	cured	5	8.003030303	Patscherkofel	no
+Exigua	Pats4_2	lcA	bac	1	7.496969697	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	lcA	bac	2	7.66969697	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	lcA	bac	3	7.542424242	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	lcA	bac	4	6.915151515	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	lcA	bac	5	7.848484848	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	lcA	cured	1	7.206060606	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	lcA	cured	2	7.268181818	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	lcA	cured	3	7.487878788	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	lcA	cured	4	7.287878788	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	lcA	cured	5	7.472727273	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	PDA	bac	1	5.915151515	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	PDA	bac	2	5.733333333	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	PDA	bac	3	6.215151515	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	PDA	bac	4	5.724242424	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	PDA	bac	5	7.918181818	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	PDA	cured	1	7.190909091	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	PDA	cured	2	7.224242424	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	PDA	cured	3	7.333333333	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	PDA	cured	4	7.345454545	Patscherkofel	Pseudomonas helmanticensis
+Exigua	Pats4_2	PDA	cured	5	6.843939394	Patscherkofel	Pseudomonas helmanticensis
+Hyalina	Patw2_7	lcA	bac	1	7.163636364	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	lcA	bac	2	7.766666667	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	lcA	bac	3	7.306060606	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	lcA	bac	4	7.342424242	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	lcA	bac	5	7.324242424	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	lcA	cured	1	5.287878788	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	lcA	cured	2	4.703030303	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	lcA	cured	3	5.287878788	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	lcA	cured	4	5.190909091	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	lcA	cured	5	5.463636364	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	PDA	bac	1	8.406060606	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	PDA	bac	2	8.572727273	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	PDA	bac	3	8.76969697	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	PDA	bac	4	8.324242424	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	PDA	bac	5	8.472727273	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	PDA	cured	1	6.245454545	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	PDA	cured	2	6.26969697	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	PDA	cured	3	6.027272727	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	PDA	cured	4	6.957575758	Patscherkofel	Pseudomonas edaphica
+Hyalina	Patw2_7	PDA	cured	5	6.218181818	Patscherkofel	Pseudomonas edaphica
+E.Galaxi	Pfs28	lcA	bac	1	7.96969697	Pfitschertal	no
+E.Galaxi	Pfs28	lcA	bac	2	7.327272727	Pfitschertal	no
+E.Galaxi	Pfs28	lcA	bac	3	7.803030303	Pfitschertal	no
+E.Galaxi	Pfs28	lcA	bac	4	7.590909091	Pfitschertal	no
+E.Galaxi	Pfs28	lcA	bac	5	7.533333333	Pfitschertal	no
+E.Galaxi	Pfs28	lcA	cured	1	7.23030303	Pfitschertal	no
+E.Galaxi	Pfs28	lcA	cured	2	7.045454545	Pfitschertal	no
+E.Galaxi	Pfs28	lcA	cured	3	7.118181818	Pfitschertal	no
+E.Galaxi	Pfs28	lcA	cured	4	7.024242424	Pfitschertal	no
+E.Galaxi	Pfs28	lcA	cured	5	7.136363636	Pfitschertal	no
+E.Galaxi	Pfs28	PDA	bac	1	6.712121212	Pfitschertal	no
+E.Galaxi	Pfs28	PDA	bac	2	6.690909091	Pfitschertal	no
+E.Galaxi	Pfs28	PDA	bac	3	6.851515152	Pfitschertal	no
+E.Galaxi	Pfs28	PDA	bac	4	6.924242424	Pfitschertal	no
+E.Galaxi	Pfs28	PDA	bac	5	6.587878788	Pfitschertal	no
+E.Galaxi	Pfs28	PDA	cured	1	6.478787879	Pfitschertal	no
+E.Galaxi	Pfs28	PDA	cured	2	6.575757576	Pfitschertal	no
+E.Galaxi	Pfs28	PDA	cured	3	6.6	Pfitschertal	no
+E.Galaxi	Pfs28	PDA	cured	4	6.675757576	Pfitschertal	no
+E.Galaxi	Pfs28	PDA	cured	5	6.724242424	Pfitschertal	no
+E.Galaxi	Pr1s18	lcA	bac	1	6.733333333	Praxmar	no
+E.Galaxi	Pr1s18	lcA	bac	2	7.115151515	Praxmar	no
+E.Galaxi	Pr1s18	lcA	bac	3	7.242424242	Praxmar	no
+E.Galaxi	Pr1s18	lcA	bac	4	6.721212121	Praxmar	no
+E.Galaxi	Pr1s18	lcA	bac	5	7.263636364	Praxmar	no
+E.Galaxi	Pr1s18	lcA	cured	1	7.039393939	Praxmar	no
+E.Galaxi	Pr1s18	lcA	cured	2	6.707575758	Praxmar	no
+E.Galaxi	Pr1s18	lcA	cured	3	6.571212121	Praxmar	no
+E.Galaxi	Pr1s18	lcA	cured	4	6.695454545	Praxmar	no
+E.Galaxi	Pr1s18	lcA	cured	5	6.413636364	Praxmar	no
+E.Galaxi	Pr1s18	PDA	bac	1	7.206060606	Praxmar	no
+E.Galaxi	Pr1s18	PDA	bac	2	7.378787879	Praxmar	no
+E.Galaxi	Pr1s18	PDA	bac	3	7.627272727	Praxmar	no
+E.Galaxi	Pr1s18	PDA	bac	4	7.203030303	Praxmar	no
+E.Galaxi	Pr1s18	PDA	bac	5	7.066666667	Praxmar	no
+E.Galaxi	Pr1s18	PDA	cured	1	7.012121212	Praxmar	no
+E.Galaxi	Pr1s18	PDA	cured	2	7.116666667	Praxmar	no
+E.Galaxi	Pr1s18	PDA	cured	3	6.886363636	Praxmar	no
+E.Galaxi	Pr1s18	PDA	cured	4	6.478787879	Praxmar	no
+E.Galaxi	Pr1s18	PDA	cured	5	7.033333333	Praxmar	no
+Gamsii	Pr2s1	lcA	bac	1	7.457575758	Praxmar	no
+Gamsii	Pr2s1	lcA	bac	2	7.6	Praxmar	no
+Gamsii	Pr2s1	lcA	bac	3	7.803030303	Praxmar	no
+Gamsii	Pr2s1	lcA	bac	4	7.663636364	Praxmar	no
+Gamsii	Pr2s1	lcA	bac	5	7.73030303	Praxmar	no
+Gamsii	Pr2s1	lcA	cured	1	7.472727273	Praxmar	no
+Gamsii	Pr2s1	lcA	cured	2	7.384848485	Praxmar	no
+Gamsii	Pr2s1	lcA	cured	3	7.409090909	Praxmar	no
+Gamsii	Pr2s1	lcA	cured	4	7.109090909	Praxmar	no
+Gamsii	Pr2s1	lcA	cured	5	7.133333333	Praxmar	no
+Gamsii	Pr2s1	PDA	bac	1	8.233333333	Praxmar	no
+Gamsii	Pr2s1	PDA	bac	2	8.460606061	Praxmar	no
+Gamsii	Pr2s1	PDA	bac	3	8.396969697	Praxmar	no
+Gamsii	Pr2s1	PDA	bac	4	8.336363636	Praxmar	no
+Gamsii	Pr2s1	PDA	bac	5	8.521212121	Praxmar	no
+Gamsii	Pr2s1	PDA	cured	1	8.03030303	Praxmar	no
+Gamsii	Pr2s1	PDA	cured	2	8.460606061	Praxmar	no
+Gamsii	Pr2s1	PDA	cured	3	8.072727273	Praxmar	no
+Gamsii	Pr2s1	PDA	cured	4	8.163636364	Praxmar	no
+Gamsii	Pr2s1	PDA	cured	5	8.196969697	Praxmar	no
+Exigua	Pr2s22	lcA	bac	1	8.021212121	Praxmar	no
+Exigua	Pr2s22	lcA	bac	2	8.133333333	Praxmar	no
+Exigua	Pr2s22	lcA	bac	3	8.390909091	Praxmar	no
+Exigua	Pr2s22	lcA	bac	4	8.587878788	Praxmar	no
+Exigua	Pr2s22	lcA	bac	5	8.666666667	Praxmar	no
+Exigua	Pr2s22	lcA	cured	1	8.118181818	Praxmar	no
+Exigua	Pr2s22	lcA	cured	2	8.418181818	Praxmar	no
+Exigua	Pr2s22	lcA	cured	3	8.284848485	Praxmar	no
+Exigua	Pr2s22	lcA	cured	4	8.242424242	Praxmar	no
+Exigua	Pr2s22	lcA	cured	5	8.221212121	Praxmar	no
+Exigua	Pr2s22	PDA	bac	1	8.287878788	Praxmar	no
+Exigua	Pr2s22	PDA	bac	2	8.724242424	Praxmar	no
+Exigua	Pr2s22	PDA	bac	3	7.936363636	Praxmar	no
+Exigua	Pr2s22	PDA	bac	4	7.948484848	Praxmar	no
+Exigua	Pr2s22	PDA	bac	5	8.748484848	Praxmar	no
+Exigua	Pr2s22	PDA	cured	1	8.039393939	Praxmar	no
+Exigua	Pr2s22	PDA	cured	2	8.06969697	Praxmar	no
+Exigua	Pr2s22	PDA	cured	3	8.342424242	Praxmar	no
+Exigua	Pr2s22	PDA	cured	4	8.581818182	Praxmar	no
+Exigua	Pr2s22	PDA	cured	5	8.496969697	Praxmar	no
+E.Galaxi	Prw1_1	lcA	bac	1	8.718181818	Praxmar	no
+E.Galaxi	Prw1_1	lcA	bac	2	8.881818182	Praxmar	no
+E.Galaxi	Prw1_1	lcA	bac	3	8.860606061	Praxmar	no
+E.Galaxi	Prw1_1	lcA	bac	4	8.803030303	Praxmar	no
+E.Galaxi	Prw1_1	lcA	bac	5	8.803030303	Praxmar	no
+E.Galaxi	Prw1_1	lcA	cured	1	9.124242424	Praxmar	no
+E.Galaxi	Prw1_1	lcA	cured	2	9.154545455	Praxmar	no
+E.Galaxi	Prw1_1	lcA	cured	3	9.293939394	Praxmar	no
+E.Galaxi	Prw1_1	lcA	cured	4	9.303030303	Praxmar	no
+E.Galaxi	Prw1_1	lcA	cured	5	9.384848485	Praxmar	no
+E.Galaxi	Prw1_1	PDA	bac	1	8.372727273	Praxmar	no
+E.Galaxi	Prw1_1	PDA	bac	2	8.175757576	Praxmar	no
+E.Galaxi	Prw1_1	PDA	bac	3	8.445454545	Praxmar	no
+E.Galaxi	Prw1_1	PDA	bac	4	8.384848485	Praxmar	no
+E.Galaxi	Prw1_1	PDA	bac	5	8.672727273	Praxmar	no
+E.Galaxi	Prw1_1	PDA	cured	1	8.827272727	Praxmar	no
+E.Galaxi	Prw1_1	PDA	cured	2	8.709090909	Praxmar	no
+E.Galaxi	Prw1_1	PDA	cured	3	9.103030303	Praxmar	no
+E.Galaxi	Prw1_1	PDA	cured	4	8.781818182	Praxmar	no
+E.Galaxi	Prw1_1	PDA	cured	5	9.003030303	Praxmar	no

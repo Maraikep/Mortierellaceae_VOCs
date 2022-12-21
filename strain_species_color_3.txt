@@ -1,0 +1,7 @@
+Species	farbe_cured	farbe_bac
+Exigua	#d8d5e8	#726f82
+Gamsii	#fdd2a0	#976c3a
+Hyalina	#fcb2aa	#964c44
+E.Galaxi	#d1eba5	#6b853f
+Sclerotiella	#ffffc2	#cccc8f
+Solitaria	#b2d0e4	#4c6a7e
